@@ -1,5 +1,0 @@
-id,name,total_points,current_streak,last_attempt_date,today_completed,created_at,updated_at
-# Replace the lines below with actual data, removing the # symbols
-# The 'id' column MUST contain actual user IDs from your auth.users table
-# Example format (after removing the # symbol):
-# 00000000-0000-0000-0000-000000000000,John Doe,150,3,2023-11-15,true,2023-10-01T10:00:00Z,2023-11-15T14:30:00Z
