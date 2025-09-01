@@ -1,0 +1,7 @@
+id,name,total_points,current_streak,last_attempt_date,today_completed,created_at,updated_at
+# IMPORTANT: The 'id' column must match existing user IDs from the auth.users table
+# Replace these example UUIDs with actual user IDs from your auth.users table
+# The error 'violates foreign key constraint profiles_id_fkey' means the IDs don't match existing users
+
+# Format of data (after removing these comment lines):
+# actual-user-id-from-auth,John Doe,150,3,2023-11-15,true,2023-10-01T10:00:00Z,2023-11-15T14:30:00Z
