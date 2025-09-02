@@ -29,6 +29,27 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
+### Environment Variables
+
+Create a `.env.local` file in the project root with your Supabase values:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=your-project-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
+
+### Configure Supabase Auth (Google/GitHub)
+
+1) In Supabase Dashboard → Auth → URL configuration:
+- Site URL: `http://localhost:3000`
+- Redirect URLs: `http://localhost:3000`
+
+2) Providers → enable Google and GitHub and set credentials:
+- Google: Client ID and Client Secret
+- GitHub: Client ID and Client Secret
+
+3) No extra callback path is needed; Supabase manages the OAuth flow and returns to your Site/Redirect URL.
+
 **Method 2: Deploy on Vercel**
 
 - Use the link in [`To open app/App_Domain`](./To%20open%20app/App_Domain) for direct deployment.
@@ -42,6 +63,7 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 - Supabase backend integration
 - Modern UI with Geist font
 - Built with Next.js
+- Email/password auth and Google/GitHub OAuth buttons
 
 ---
 
