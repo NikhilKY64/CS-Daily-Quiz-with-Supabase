@@ -142,7 +142,7 @@ export default function LoginForm({ onLogin }: { onLogin?: (user: any) => void }
         <CardDescription className="text-center">
           {isSignUp 
             ? "Enter your information to create an account" 
-            : "Enter your credentials to sign in to your account"}
+            : "Enter your correct details to sign."}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -168,7 +168,7 @@ export default function LoginForm({ onLogin }: { onLogin?: (user: any) => void }
             <Mail className="ml-2 h-5 w-5 text-muted-foreground" />
             <Input
               id="email"
-              placeholder="m@example.com"
+              placeholder="abc@gmail.com"
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
@@ -179,7 +179,7 @@ export default function LoginForm({ onLogin }: { onLogin?: (user: any) => void }
         </div>
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Create Password</Label>
             {!isSignUp && (
               <a 
                 href="#" 
