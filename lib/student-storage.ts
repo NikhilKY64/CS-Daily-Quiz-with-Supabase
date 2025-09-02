@@ -48,11 +48,32 @@ export function setCurrentStudent(studentId: string): void {
 
 // Get student data from Supabase
 export async function getStudentData(): Promise<StudentProgress> {
-  try {
-    const userId = await getCurrentStudentId()
-    if (!userId) {
+  const userId = await getCurrentStudentId()
+  if (!userId) {
+    // Not logged in → treat as guest without mutating anything
+    return {
+      studentId: "guest",
+      studentName: "Guest",
+      totalPoints: 0,
+      currentStreak: 0,
+      lastAttemptDate: null,
+      todayCompleted: false,
+      lastQuizScore: 0,
+      lastQuizPercentage: 0,
+      quizHistory: [],
+    }
+  }
+
+  // Get profile
+  let profile = await getProfile(userId)
+  if (!profile) {
+    // Create a new profile if one doesn't exist (uses name from auth in supabaseClient)
+    try {
+      profile = await createProfile(userId, "Student")
+    } catch {
+      // If we still can't create, return minimal structure
       return {
-        studentId: "default",
+        studentId: userId,
         studentName: "Student",
         totalPoints: 0,
         currentStreak: 0,
@@ -63,62 +84,72 @@ export async function getStudentData(): Promise<StudentProgress> {
         quizHistory: [],
       }
     }
+  }
 
-    // Get profile data
-    let profile = await getProfile(userId)
-if (!profile) {
-  // Create a new profile if one doesn't exist
-  profile = await createProfile(userId, "New Student") // You might want to get a default name from somewhere else
-}
-    
-    // Get quiz attempts (quiz history)
-    const attempts = await getQuizAttempts(userId)
-    
-    // Convert attempts to QuizResult format
-    const quizHistory: QuizResult[] = []
-    for (const attempt of attempts) {
+  // Attempts and history are best-effort; do not fail user profile rendering
+  let attempts: any[] = []
+  try {
+    console.log('=== GETTING QUIZ ATTEMPTS ===')
+    console.log('User ID:', userId)
+    attempts = await getQuizAttempts(userId)
+    console.log('Quiz attempts loaded:', attempts)
+    console.log('Attempts length:', attempts?.length || 0)
+  } catch (e) {
+    console.warn('Could not load attempts:', e)
+  }
+
+  let quizHistory: QuizResult[] = []
+  console.log('=== BUILDING QUIZ HISTORY ===')
+  for (const attempt of attempts) {
+    try {
+      console.log('Processing attempt:', attempt)
       const questions = await getQuizAttemptQuestions(attempt.id)
+      console.log('Questions for attempt:', questions)
       const quizResult: QuizResult = {
         date: attempt.date,
         score: attempt.score,
         totalQuestions: attempt.total_questions,
         timeSpent: attempt.time_spent,
-        questions: questions.map(q => ({
-          questionId: q.question_id?.toString() || '',
-          question: q.quiz_questions?.question || '',
+        questions: questions.map((q: any) => ({
+          questionId: q.question_id?.toString?.() || '',
+          question: q.question_text || '',
           selectedAnswer: q.selected_answer,
           correctAnswer: q.correct_answer,
           isCorrect: q.is_correct,
           timeSpent: q.time_spent
         }))
       }
+      console.log('Quiz result created:', quizResult)
       quizHistory.push(quizResult)
+    } catch (e) {
+      console.warn('Could not load attempt questions:', e)
     }
+  }
+  console.log('Final quiz history:', quizHistory)
+  console.log('Final quiz history length:', quizHistory?.length || 0)
 
-    return {
-      studentId: profile.id,
-      studentName: profile.name,
-      totalPoints: profile.total_points,
-      currentStreak: profile.current_streak,
-      lastAttemptDate: profile.last_attempt_date,
-      todayCompleted: profile.today_completed,
-      lastQuizScore: profile.last_quiz_score,
-      lastQuizPercentage: profile.last_quiz_percentage,
-      quizHistory
+  // Reconcile points conservatively (only increase)
+  const sumPoints = attempts.reduce((acc: number, a: any) => acc + (a.score || 0), 0)
+  let effectiveTotalPoints = typeof profile.total_points === 'number' ? profile.total_points : 0
+  if (sumPoints > effectiveTotalPoints) {
+    effectiveTotalPoints = sumPoints
+    try {
+      await updateProfile(userId, { total_points: sumPoints })
+    } catch (e) {
+      console.warn('Could not reconcile total_points from attempts:', e)
     }
-  } catch (error) {
-    console.error('Error getting student data:', error)
-    return {
-      studentId: "default",
-      studentName: "Student",
-      totalPoints: 0,
-      currentStreak: 0,
-      lastAttemptDate: null,
-      todayCompleted: false,
-      lastQuizScore: 0,
-      lastQuizPercentage: 0,
-      quizHistory: [],
-    }
+  }
+
+  return {
+    studentId: profile.id,
+    studentName: profile.name,
+    totalPoints: effectiveTotalPoints,
+    currentStreak: profile.current_streak,
+    lastAttemptDate: profile.last_attempt_date,
+    todayCompleted: profile.today_completed,
+    lastQuizScore: profile.last_quiz_score,
+    lastQuizPercentage: profile.last_quiz_percentage,
+    quizHistory
   }
 }
 

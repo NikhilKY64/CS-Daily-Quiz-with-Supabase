@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter as DialogFooterUI, DialogTrigger } from "@/components/ui/dialog"
 import { Github, Mail, Lock, User } from "lucide-react"
 
 export default function LoginForm({ onLogin }: { onLogin?: (user: any) => void }) {
@@ -15,6 +16,10 @@ export default function LoginForm({ onLogin }: { onLogin?: (user: any) => void }
   const [loading, setLoading] = useState(false)
   const [rememberMe, setRememberMe] = useState(false)
   const [isSignUp, setIsSignUp] = useState(false)
+  const [supportOpen, setSupportOpen] = useState(false)
+  const [supportEmail, setSupportEmail] = useState("")
+  const [supportMessage, setSupportMessage] = useState("")
+  const [submittingSupport, setSubmittingSupport] = useState(false)
 
   const afterAuthSuccess = async (isNewUser = false) => {
     try {
@@ -109,6 +114,44 @@ export default function LoginForm({ onLogin }: { onLogin?: (user: any) => void }
       setRememberMe(true)
     }
   }, [])
+
+  // Prefill support email when opening support dialog
+  useEffect(() => {
+    const prefill = async () => {
+      if (!supportOpen) return
+      try {
+        const { data } = await supabase.auth.getUser()
+        const authedEmail = data?.user?.email || ""
+        setSupportEmail(authedEmail || email || "")
+      } catch (_e) {
+        setSupportEmail(email || "")
+      }
+    }
+    prefill()
+  }, [supportOpen])
+
+  const submitSupportRequest = async () => {
+    if (!supportEmail || !supportMessage.trim()) {
+      setStatus('Please provide an email and a message for support.')
+      return
+    }
+    setSubmittingSupport(true)
+    try {
+      const { data: userData } = await supabase.auth.getUser()
+      const userId = userData?.user?.id || null
+      const { error } = await supabase
+        .from('support_requests')
+        .insert({ user_id: userId, email: supportEmail, message: supportMessage })
+      if (error) throw error
+      setSupportOpen(false)
+      setSupportMessage("")
+      setStatus('Support request sent! We will get back to you soon.')
+    } catch (e: any) {
+      setStatus(`Failed to send support request: ${e.message}`)
+    } finally {
+      setSubmittingSupport(false)
+    }
+  }
 
   return (
     <Card className="max-w-md mx-auto mt-10 shadow-lg border-opacity-50">
@@ -322,7 +365,44 @@ export default function LoginForm({ onLogin }: { onLogin?: (user: any) => void }
           )}
         </div>
         <div className="text-xs text-center text-muted-foreground">
-          Need help? <a href="mailto:support@example.com" className="underline underline-offset-2">Contact support</a>
+          Need help?{' '}
+          <Dialog open={supportOpen} onOpenChange={setSupportOpen}>
+            <DialogTrigger asChild>
+              <button className="underline underline-offset-2">Contact support</button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Contact Support</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="support-email">Email</Label>
+                  <Input
+                    id="support-email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={supportEmail}
+                    onChange={(e) => setSupportEmail(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="support-message">Message</Label>
+                  <textarea
+                    id="support-message"
+                    className="w-full rounded-md border bg-background p-2 focus:outline-none focus:ring-2 focus:ring-primary/20 min-h-28"
+                    placeholder="How can we help?"
+                    value={supportMessage}
+                    onChange={(e) => setSupportMessage(e.target.value)}
+                  />
+                </div>
+              </div>
+              <DialogFooterUI>
+                <Button onClick={submitSupportRequest} disabled={submittingSupport} className="w-full sm:w-auto">
+                  {submittingSupport ? 'Sending...' : 'Send'}
+                </Button>
+              </DialogFooterUI>
+            </DialogContent>
+          </Dialog>
         </div>
       </CardFooter>
     </Card>

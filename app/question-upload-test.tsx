@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { QuestionForm } from '@/components/question-form'
 import { UploadMonitor, useUploadMonitor } from '@/components/upload-monitor'
 import { addQuestion } from '@/lib/question-storage'
+import { testQuizQuestionsTable } from '@/lib/supabaseClient'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Plus, TestTube } from 'lucide-react'
@@ -21,6 +22,11 @@ export default function QuestionUploadTestPage() {
   })
 
   const handleSaveQuestion = async (questionData: any) => {
+    console.log('=== HANDLE SAVE QUESTION CALLED ===')
+    console.log('Question data received:', questionData)
+    console.log('Question data type:', typeof questionData)
+    console.log('Question data keys:', Object.keys(questionData))
+    
     setUploadStatus({
       isUploading: true,
       success: null,
@@ -28,7 +34,9 @@ export default function QuestionUploadTestPage() {
     })
 
     try {
+      console.log('Calling addQuestion function...')
       const savedQuestion = await addQuestion(questionData)
+      console.log('addQuestion result:', savedQuestion)
       setUploadStatus({
         isUploading: false,
         success: true,
@@ -45,10 +53,45 @@ export default function QuestionUploadTestPage() {
         })
       }, 2000)
     } catch (error: any) {
+      console.error('Error in handleSaveQuestion:', error)
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      })
       setUploadStatus({
         isUploading: false,
         success: false,
         message: `❌ Upload failed: ${error.message}`
+      })
+    }
+  }
+
+  const handleTestDatabase = async () => {
+    console.log('=== TESTING DATABASE CONNECTION ===')
+    try {
+      const result = await testQuizQuestionsTable()
+      console.log('Database test result:', result)
+      
+      if (result.success) {
+        setUploadStatus({
+          isUploading: false,
+          success: true,
+          message: `✅ Database test successful! Table exists: ${result.tableExists}, Can insert: ${result.canInsert}`
+        })
+      } else {
+        setUploadStatus({
+          isUploading: false,
+          success: false,
+          message: `❌ Database test failed: ${result.error}`
+        })
+      }
+    } catch (error: any) {
+      console.error('Database test error:', error)
+      setUploadStatus({
+        isUploading: false,
+        success: false,
+        message: `❌ Database test error: ${error.message}`
       })
     }
   }
@@ -71,10 +114,16 @@ export default function QuestionUploadTestPage() {
             Test and monitor question uploads to Supabase
           </p>
         </div>
-        <Button onClick={() => setShowForm(true)} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Add Test Question
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setShowForm(true)} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Add Test Question
+          </Button>
+          <Button onClick={handleTestDatabase} variant="outline" className="flex items-center gap-2">
+            <TestTube className="h-4 w-4" />
+            Test Database
+          </Button>
+        </div>
       </div>
 
       {/* Upload Status Display */}

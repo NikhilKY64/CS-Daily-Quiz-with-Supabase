@@ -72,7 +72,29 @@ export function StudentDashboard({ quizTitle, currentStudent }: StudentDashboard
     } else {
       loadStudentData()
     }
+
+    // Auto-open leaderboard if flagged
+    try {
+      const flag = sessionStorage.getItem('openLeaderboard')
+      if (flag === '1') {
+        sessionStorage.removeItem('openLeaderboard')
+        setShowLeaderboard(true)
+      }
+    } catch {}
   }, [currentStudent])
+
+  // Listen for a custom event to open leaderboard from header without navigation
+  useEffect(() => {
+    const handler = () => setShowLeaderboard(true)
+    if (typeof window !== 'undefined') {
+      window.addEventListener('open-leaderboard', handler as EventListener)
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('open-leaderboard', handler as EventListener)
+      }
+    }
+  }, [])
 
   const handleStartQuiz = () => {
     setShowQuiz(true)
@@ -88,7 +110,18 @@ export function StudentDashboard({ quizTitle, currentStudent }: StudentDashboard
   }
 
   const handleShowProgress = () => {
+    console.log('=== PROGRESS BUTTON CLICKED ===')
+    console.log('Current student data:', studentData)
+    console.log('Current state - showProgress:', showProgress)
+    console.log('Current state - showQuiz:', showQuiz)
+    console.log('Current state - showLeaderboard:', showLeaderboard)
+    console.log('About to set showProgress to true')
+    console.log('Student data type:', typeof studentData)
+    console.log('Student data keys:', Object.keys(studentData || {}))
+    console.log('Total points:', studentData?.totalPoints)
+    console.log('Current streak:', studentData?.currentStreak)
     setShowProgress(true)
+    console.log('showProgress state set to true')
   }
 
   const handleBackFromProgress = () => {

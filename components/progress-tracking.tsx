@@ -14,6 +14,7 @@ interface ProgressTrackingProps {
 }
 
 export function ProgressTracking({ onBack }: ProgressTrackingProps) {
+  console.log('ProgressTracking component is rendering!')
   const [studentData, setStudentData] = useState<StudentProgress | null>(null)
   const [timeRange, setTimeRange] = useState("30") // days
   const [currentPage, setCurrentPage] = useState(0)
@@ -22,7 +23,10 @@ export function ProgressTracking({ onBack }: ProgressTrackingProps) {
   useEffect(() => {
     const loadData = async () => {
       try {
+        console.log('=== LOADING PROGRESS DATA ===')
         const data = await getStudentData()
+        console.log('Progress data loaded:', data)
+        console.log('Quiz history length:', data.quizHistory?.length || 0)
         setStudentData(data)
       } catch (error) {
         console.error('Error loading student data:', error)
@@ -32,6 +36,7 @@ export function ProgressTracking({ onBack }: ProgressTrackingProps) {
   }, [])
 
   if (!studentData) {
+    console.log('ProgressTracking: No student data yet, showing loading...')
     return (
       <Card className="w-full max-w-4xl mx-auto">
         <CardContent className="py-8 text-center">
