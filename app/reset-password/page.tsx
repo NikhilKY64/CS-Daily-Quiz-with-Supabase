@@ -17,20 +17,16 @@ function ResetPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Extract the hash fragment from the URL which contains the access token
+  // Extract and exchange the URL fragment code to establish a session
   useEffect(() => {
-    // The hash fragment is available in the URL after Supabase redirects back
     const handleHashFragment = async () => {
       const hashFragment = window.location.hash;
       if (hashFragment) {
         try {
-          // The hash contains the access token and other info
-          // Supabase client will automatically handle this
-          const { data, error } = await supabase.auth.refreshSession();
-          
+          const { data, error } = await supabase.auth.exchangeCodeForSession(hashFragment);
           if (error) {
             setStatus(`Error: ${error.message}`);
-          } else if (data) {
+          } else if (data?.session) {
             setStatus('Ready to set new password');
           }
         } catch (e) {
