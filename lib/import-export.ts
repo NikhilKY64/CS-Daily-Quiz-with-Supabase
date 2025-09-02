@@ -1,5 +1,5 @@
 import type { Question, QuestionBank } from "./types"
-import { getQuestionBank, saveQuestionBank, getQuizMetadata } from "./question-storage"
+import { getQuestionBank, getQuizMetadata, addQuestion } from "./question-storage"
 
 export interface ImportResult {
   success: boolean
@@ -151,26 +151,29 @@ export function importQuestions(file: File, replaceExisting = false): Promise<Im
           return question
         })
 
-        // Convert to question bank format
-        const questionBankToSave: QuestionBank = {}
-        questionsToAdd.forEach(q => {
-          questionBankToSave[q.id] = q
-        })
+        // Import questions using the working addQuestion function
+        let importedCount = 0
+        const importErrors: string[] = []
         
-        // Add to existing questions if not replacing
-        if (!replaceExisting) {
-          Object.assign(questionBankToSave, existingQuestions)
+        for (const question of questionsToAdd) {
+          try {
+            // Remove id, createdAt, updatedAt as addQuestion will generate new ones
+            const { id, createdAt, updatedAt, ...questionData } = question
+            await addQuestion(questionData)
+            importedCount++
+          } catch (error) {
+            console.error(`Failed to import question: ${question.question}`, error)
+            importErrors.push(`Question "${question.question}": ${error instanceof Error ? error.message : 'Import failed'}`)
+          }
         }
-        
-        await saveQuestionBank(questionBankToSave)
 
         resolve({
           success: true,
-          message: `Successfully imported ${questionsToAdd.length} questions.${
-            errors.length > 0 ? ` ${errors.length} questions were skipped due to errors.` : ""
+          message: `Successfully imported ${importedCount} questions.${
+            importErrors.length > 0 ? ` ${importErrors.length} questions failed to import.` : ""
           }`,
-          importedCount: questionsToAdd.length,
-          errors: errors.length > 0 ? errors : undefined,
+          importedCount: importedCount,
+          errors: importErrors.length > 0 ? importErrors : undefined,
         })
       } catch (error) {
         console.error("Import error:", error)

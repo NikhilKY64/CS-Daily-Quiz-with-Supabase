@@ -67,14 +67,21 @@ export function QuestionForm({ question, onSave, onCancel, showUploadStatus = fa
 
     const validOptions = formData.options.filter((opt) => opt.trim())
 
-    onSave({
+    const questionData = {
       question: formData.question.trim(),
       options: validOptions,
       correctAnswer: formData.correctAnswer,
       explanation: formData.explanation.trim() || undefined,
       category: formData.category.trim() || undefined,
       difficulty: formData.difficulty,
-    })
+    }
+    
+    console.log('=== QUESTION FORM SUBMITTED ===')
+    console.log('Form data being sent:', questionData)
+    console.log('Valid options count:', validOptions.length)
+    console.log('Correct answer index:', formData.correctAnswer)
+
+    onSave(questionData)
   }
 
   const updateOption = (index: number, value: string) => {

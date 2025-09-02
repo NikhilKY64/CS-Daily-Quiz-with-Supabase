@@ -68,7 +68,13 @@ export async function getQuizMetadata(): Promise<{
 
 // Add a new question to Supabase
 export async function addQuestion(question: Omit<Question, 'id' | 'createdAt' | 'updatedAt'>): Promise<Question> {
+  console.log('=== ADD QUESTION CALLED ===')
+  console.log('Question data received:', question)
+  console.log('Question type:', typeof question)
+  console.log('Question keys:', Object.keys(question))
+  
   try {
+    console.log('Calling createQuizQuestion...')
     const newQuestion = await createQuizQuestion({
       question: question.question,
       options: question.options,
@@ -77,8 +83,9 @@ export async function addQuestion(question: Omit<Question, 'id' | 'createdAt' | 
       category: question.category,
       difficulty: question.difficulty
     })
+    console.log('createQuizQuestion result:', newQuestion)
     
-    return {
+    const result = {
       id: newQuestion.id.toString(),
       question: newQuestion.question,
       options: newQuestion.options,
@@ -89,7 +96,15 @@ export async function addQuestion(question: Omit<Question, 'id' | 'createdAt' | 
       createdAt: newQuestion.created_at || new Date().toISOString(),
       updatedAt: newQuestion.updated_at || new Date().toISOString()
     }
+    console.log('Returning question result:', result)
+    return result
   } catch (error) {
+    console.error('Error in addQuestion:', error)
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    })
     console.error('Error adding question:', error)
     throw error
   }

@@ -10,6 +10,7 @@ import type { Question } from "@/lib/types"
 import type { QuizResult, QuizQuestionResult } from "@/lib/student-storage"
 import { getRandomQuestions } from "@/lib/question-storage"
 import { completeQuiz } from "@/lib/student-storage"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 
 interface DailyQuizProps {
   onComplete: (result: QuizResult) => void
@@ -28,6 +29,11 @@ export function DailyQuiz({ onComplete, onExit }: DailyQuizProps) {
   const [questionTimes, setQuestionTimes] = useState<number[]>([])
   const [showResults, setShowResults] = useState(false)
   const [quizResult, setQuizResult] = useState<QuizResult | null>(null)
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false)
+  const [feedbackIndex, setFeedbackIndex] = useState<number | null>(null)
+  // Tracks per-question evaluation after user clicks Next/Submit
+  const [evaluation, setEvaluation] = useState<Array<"pending" | "correct" | "wrong">>([])
+  const [lockedAnswers, setLockedAnswers] = useState<boolean[]>([])
 
   useEffect(() => {
     const loadQuestions = async () => {
@@ -43,6 +49,8 @@ export function DailyQuiz({ onComplete, onExit }: DailyQuizProps) {
         setQuestions(randomQuestions)
         setAnswers(new Array(randomQuestions.length).fill(-1))
         setQuestionTimes(new Array(randomQuestions.length).fill(0))
+        setEvaluation(new Array(randomQuestions.length).fill("pending"))
+        setLockedAnswers(new Array(randomQuestions.length).fill(false))
         setStartTime(Date.now())
         setQuestionStartTime(Date.now())
         setState("quiz")
@@ -58,6 +66,7 @@ export function DailyQuiz({ onComplete, onExit }: DailyQuizProps) {
   const currentQuestion = questions[currentQuestionIndex]
 
   const handleAnswerSelect = (answerIndex: number) => {
+    if (lockedAnswers[currentQuestionIndex]) return
     const newAnswers = [...answers]
     newAnswers[currentQuestionIndex] = answerIndex
     setAnswers(newAnswers)
@@ -70,9 +79,39 @@ export function DailyQuiz({ onComplete, onExit }: DailyQuizProps) {
   }
 
   const handleNext = () => {
+    // Show feedback colors on current question before moving to next
+    if (answers[currentQuestionIndex] !== -1 && feedbackIndex !== currentQuestionIndex) {
+      // Mark evaluation for the current question if not already evaluated
+      setEvaluation((prev) => {
+        const updated = [...prev]
+        if (updated[currentQuestionIndex] === "pending") {
+          updated[currentQuestionIndex] =
+            answers[currentQuestionIndex] === currentQuestion.correctAnswer ? "correct" : "wrong"
+        }
+        return updated
+      })
+
+      // Lock current question so answer can't be changed afterwards
+      setLockedAnswers((prev) => {
+        const copy = [...prev]
+        copy[currentQuestionIndex] = true
+        return copy
+      })
+
+      setFeedbackIndex(currentQuestionIndex)
+      setTimeout(() => {
+        if (currentQuestionIndex < questions.length - 1) {
+          setCurrentQuestionIndex((idx) => idx + 1)
+          setQuestionStartTime(Date.now())
+        }
+        setFeedbackIndex(null)
+      }, 800)
+      return
+    }
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1)
       setQuestionStartTime(Date.now())
+      setFeedbackIndex(null)
     }
   }
 
@@ -108,6 +147,16 @@ export function DailyQuiz({ onComplete, onExit }: DailyQuizProps) {
         isCorrect,
         timeSpent: questionTimes[index],
       }
+    })
+
+    // Ensure last question gets evaluated
+    setEvaluation((prev) => {
+      const updated = [...prev]
+      if (updated[currentQuestionIndex] === "pending" && answers[currentQuestionIndex] !== -1) {
+        updated[currentQuestionIndex] =
+          answers[currentQuestionIndex] === currentQuestion.correctAnswer ? "correct" : "wrong"
+      }
+      return updated
     })
 
     const result: QuizResult = {
@@ -187,7 +236,7 @@ export function DailyQuiz({ onComplete, onExit }: DailyQuizProps) {
 
   if (showResults && quizResult) {
     return (
-      <Card className="w-full max-w-2xl mx-auto">
+      <Card className="w-full max-w-5xl mx-auto">
         <CardHeader className="text-center">
           <CardTitle className="flex items-center justify-center gap-2">
             <Trophy className="h-6 w-6 text-primary" />
@@ -201,9 +250,8 @@ export function DailyQuiz({ onComplete, onExit }: DailyQuizProps) {
               {quizResult.score}/{quizResult.totalQuestions}
             </div>
             <p className="text-lg font-medium">{getScoreMessage(quizResult.score, quizResult.totalQuestions)}</p>
-            <p className="text-sm text-muted-foreground">
-              Completed in {formatTime(quizResult.timeSpent)} • {quizResult.score} points earned
-            </p>
+            <p className="text-sm text-muted-foreground">Completed in {formatTime(quizResult.timeSpent)}</p>
+            <p className="text-sm font-medium">Points gained: {quizResult.score}</p>
           </div>
 
           {/* Progress Bar */}
@@ -256,7 +304,8 @@ export function DailyQuiz({ onComplete, onExit }: DailyQuizProps) {
   }
 
   return (
-    <div className="w-full max-w-2xl mx-auto space-y-4">
+    <div className="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_minmax(260px,320px)] gap-4 px-3 sm:px-6">
+      <div className="space-y-4">
       {/* Progress Header */}
       <Card>
         <CardContent className="py-4">
@@ -284,17 +333,35 @@ export function DailyQuiz({ onComplete, onExit }: DailyQuizProps) {
           )}
         </CardHeader>
         <CardContent className="space-y-3">
-          {currentQuestion.options.map((option, index) => (
+            {currentQuestion.options.map((option, index) => {
+              const selected = answers[currentQuestionIndex]
+              // Show feedback if we're in the brief feedback window OR if the question was already locked
+              const showFeedback = feedbackIndex === currentQuestionIndex || lockedAnswers[currentQuestionIndex]
+              const isCorrect = index === currentQuestion.correctAnswer
+              const isSelectedWrong = showFeedback && selected === index && !isCorrect
+              const isSelected = selected === index
+              const base = "w-full justify-start text-left h-auto py-3 px-4 break-words"
+              const feedbackClass = showFeedback
+                ? isCorrect
+                  ? "border-green-700 bg-green-600 text-white"
+                  : isSelectedWrong
+                    ? "border-red-700 bg-red-600 text-white"
+                    : ""
+                : ""
+              const disabled = lockedAnswers[currentQuestionIndex]
+              return (
             <Button
               key={index}
-              variant={answers[currentQuestionIndex] === index ? "default" : "outline"}
-              className="w-full justify-start text-left h-auto py-3 px-4"
+                  variant={isSelected && !showFeedback ? "default" : "outline"}
+                  className={`${base} ${feedbackClass} ${disabled ? 'opacity-70 cursor-not-allowed' : ''}`}
               onClick={() => handleAnswerSelect(index)}
+              disabled={disabled}
             >
               <span className="font-medium mr-3">{String.fromCharCode(65 + index)}.</span>
               <span className="flex-1">{option}</span>
             </Button>
-          ))}
+              )
+            })}
         </CardContent>
       </Card>
 
@@ -305,24 +372,9 @@ export function DailyQuiz({ onComplete, onExit }: DailyQuizProps) {
           Previous
         </Button>
 
-        <div className="flex gap-2">
-          {questions.map((_, index) => (
-            <div
-              key={index}
-              className={`w-3 h-3 rounded-full ${
-                index === currentQuestionIndex
-                  ? "bg-primary"
-                  : answers[index] !== -1
-                    ? "bg-green-500"
-                    : "bg-muted-foreground/30"
-              }`}
-            />
-          ))}
-        </div>
-
         {currentQuestionIndex === questions.length - 1 ? (
           <Button
-            onClick={handleSubmit}
+              onClick={() => setShowSubmitConfirm(true)}
             disabled={answers.some((answer) => answer === -1)}
             className="bg-green-600 hover:bg-green-700"
           >
@@ -337,11 +389,81 @@ export function DailyQuiz({ onComplete, onExit }: DailyQuizProps) {
       </div>
 
       {/* Exit Button */}
-      <div className="text-center pt-4">
+        <div className="text-center pt-2">
         <Button variant="ghost" onClick={onExit} className="text-muted-foreground">
           Exit Quiz
         </Button>
       </div>
+      </div>
+
+      {/* Right sidebar: Question status */}
+      <Card className="h-fit lg:sticky lg:top-4">
+        <CardContent className="py-4 space-y-4">
+          {/* Summary counts */}
+          <div className="grid grid-cols-3 gap-2 text-center text-xs">
+            <div className="rounded-md border p-2">
+              <div className="text-muted-foreground">Correct</div>
+              <div className="font-semibold">{evaluation.filter((e) => e === 'correct').length}</div>
+            </div>
+            <div className="rounded-md border p-2">
+              <div className="text-muted-foreground">Wrong</div>
+              <div className="font-semibold">{evaluation.filter((e) => e === 'wrong').length}</div>
+            </div>
+            <div className="rounded-md border p-2">
+              <div className="text-muted-foreground">Not Answered</div>
+              <div className="font-semibold">{questions.length - answers.filter((a) => a !== -1).length}</div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm">
+            <div className="flex items-center gap-2"><span className="inline-block size-3 rounded-full bg-primary" /> Current</div>
+            <div className="flex items-center gap-2"><span className="inline-block size-3 rounded-full bg-green-200" /> Correct</div>
+            <div className="flex items-center gap-2"><span className="inline-block size-3 rounded-full bg-red-200" /> Wrong</div>
+            <div className="flex items-center gap-2"><span className="inline-block size-3 rounded-full bg-blue-200" /> Attempted</div>
+            <div className="flex items-center gap-2"><span className="inline-block size-3 rounded-full bg-muted-foreground/20" /> Empty</div>
+          </div>
+
+          <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-5 gap-2">
+            {questions.map((_, index) => {
+              let cls = 'bg-muted/30'
+              if (index === currentQuestionIndex) {
+                cls = 'bg-primary text-primary-foreground'
+              } else if (evaluation[index] === 'correct') {
+                cls = 'bg-green-200 text-green-900'
+              } else if (evaluation[index] === 'wrong') {
+                cls = 'bg-red-200 text-red-900'
+              } else if (answers[index] !== -1) {
+                cls = 'bg-blue-200 text-blue-900'
+              }
+              return (
+                <button
+                  key={index}
+                  className={`h-9 rounded-md text-sm font-medium ${cls}`}
+                  onClick={() => setCurrentQuestionIndex(index)}
+                >
+                  {index + 1}
+                </button>
+              )
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Submit confirmation dialog */}
+      <Dialog open={showSubmitConfirm} onOpenChange={setShowSubmitConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Submit Quiz</DialogTitle>
+          </DialogHeader>
+          <div className="text-sm text-muted-foreground">
+            Are you sure you want to submit? You won't be able to change answers afterwards.
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSubmitConfirm(false)}>Resume</Button>
+            <Button onClick={handleSubmit}>Submit</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
