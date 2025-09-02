@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { supabase, signUpUser, signInUser, signInWithGitHub, resetPassword, addStudent, createProfile } from "@/lib/supabaseClient"
+import { supabase, signUpUser, signInUser, resetPassword, addStudent, createProfile } from "@/lib/supabaseClient"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -57,47 +57,24 @@ export default function LoginForm({ onLogin }: { onLogin?: (user: any) => void }
     }
   }
 
-  // Check if email exists in Supabase Auth
-  const checkEmailExists = async (email: string): Promise<boolean> => {
-    try {
-      // We'll attempt to sign in with an invalid password to check if the email exists
-      // Supabase will return a specific error for invalid credentials vs non-existent user
-      const { error } = await supabase.auth.signInWithPassword({ 
-        email, 
-        password: 'checkingIfEmailExists' 
-      })
-      
-      // If error message contains 'Invalid login credentials', the email exists
-      // If it contains 'Email not confirmed', the email exists but isn't confirmed
-      return Boolean(error?.message?.includes('Invalid login credentials')) ||
-             error?.message?.includes('Email not confirmed')
-    } catch (e) {
-      console.error('Error checking email existence:', e)
-      return false
-    }
-  }
-
   const handleSignUp = async () => {
     setLoading(true)
     setStatus("Signing up...")
     
     try {
-      // First check if email already exists
-      const emailExists = await checkEmailExists(email)
-      
-      if (emailExists) {
-        setStatus("This email is already registered. Please log in instead.")
-        setLoading(false)
-        return
-      }
-      
-      // If email doesn't exist, proceed with signup
       await signUpUser(email, password)
       setStatus("To confirm your email, check your inbox.")
       // If confirmation is disabled, session may be active immediately
       await afterAuthSuccess(true) // Pass true to indicate this is a new user
     } catch (e: any) {
-      setStatus(`Signup error: ${e.message}`)
+      // Handle duplicate email and other common cases
+      if (e.message && (e.message.includes('already registered') || e.message.includes('User already registered'))) {
+        setStatus('This email is already registered. Please log in instead.')
+      } else if (e.message && e.message.includes('Password should be at least')) {
+        setStatus('Password is too short.')
+      } else {
+        setStatus(`Signup error: ${e.message}`)
+      }
     } finally {
       setLoading(false)
     }
@@ -145,7 +122,70 @@ export default function LoginForm({ onLogin }: { onLogin?: (user: any) => void }
             : "Enter your correct details to sign."}
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6">
+        {/* Social login buttons */}
+        <div className="space-y-3">
+          <button
+            type="button"
+            className="w-full inline-flex items-center justify-center gap-2 rounded-md border bg-white px-4 py-2 text-sm font-medium text-black shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary/20"
+            onClick={async () => {
+              try {
+                setLoading(true)
+                setStatus("Redirecting to Google...")
+                await supabase.auth.signInWithOAuth({
+                  provider: 'google',
+                  options: { redirectTo: window.location.origin }
+                })
+              } catch (e: any) {
+                setStatus(`Google sign in error: ${e.message}`)
+                setLoading(false)
+              }
+            }}
+            disabled={loading}
+          >
+            {/* Google "G" logo */}
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" className="h-5 w-5">
+              <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303C33.813 31.91 29.274 35 24 35c-7.18 0-13-5.82-13-13s5.82-13 13-13c3.31 0 6.32 1.235 8.605 3.26l5.657-5.657C34.943 3.053 29.73 1 24 1 11.85 1 2 10.85 2 23s9.85 22 22 22 22-9.85 22-22c0-1.467-.153-2.9-.389-4.283z"/>
+              <path fill="#FF3D00" d="M6.306 14.691l6.571 4.818C14.485 16.062 18.873 13 24 13c3.31 0 6.32 1.235 8.605 3.26l5.657-5.657C34.943 3.053 29.73 1 24 1 15.317 1 7.9 5.658 6.306 14.691z"/>
+              <path fill="#4CAF50" d="M24 45c5.197 0 9.86-1.977 13.403-5.197l-6.188-5.238C29.01 36.484 26.648 37 24 37c-5.245 0-9.698-3.36-11.29-8.032l-6.52 5.02C8.741 40.798 15.78 45 24 45z"/>
+              <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-1.301 3.91-5.84 7-11.303 7-5.245 0-9.698-3.36-11.29-8.032l-6.52 5.02C8.741 40.798 15.78 45 24 45c12.15 0 22-9.85 22-22 0-1.467-.153-2.9-.389-4.283z"/>
+            </svg>
+            <span>Continue with Google</span>
+          </button>
+
+          <button
+            type="button"
+            className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-black px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-black/90 focus:outline-none focus:ring-2 focus:ring-primary/20"
+            onClick={async () => {
+              try {
+                setLoading(true)
+                setStatus("Redirecting to GitHub...")
+                await supabase.auth.signInWithOAuth({
+                  provider: 'github',
+                  options: { redirectTo: window.location.origin }
+                })
+              } catch (e: any) {
+                setStatus(`GitHub sign in error: ${e.message}`)
+                setLoading(false)
+              }
+            }}
+            disabled={loading}
+          >
+            <Github className="h-4 w-4" />
+            <span>Continue with GitHub</span>
+          </button>
+        </div>
+
+        {/* Divider */}
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-card px-2 text-muted-foreground">or</span>
+          </div>
+        </div>
+
         {isSignUp && (
           <div className="space-y-2">
             <Label htmlFor="name">Name</Label>
@@ -241,37 +281,6 @@ export default function LoginForm({ onLogin }: { onLogin?: (user: any) => void }
         >
           {loading ? "Processing..." : isSignUp ? "Create Account" : "Sign In"}
         </Button>
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-card px-2 text-muted-foreground">
-              Or continue with
-            </span>
-          </div>
-        </div>
-        <div className="flex justify-center">
-           <Button 
-             variant="outline" 
-             className="w-full" 
-             type="button"
-             onClick={async () => {
-               try {
-                 setLoading(true);
-                 setStatus("Redirecting to GitHub...");
-                 await signInWithGitHub();
-                 // Note: No need to call afterAuthSuccess here as the page will redirect to GitHub
-               } catch (e: any) {
-                 setStatus(`GitHub sign in error: ${e.message}`);
-                 setLoading(false);
-               }
-             }}
-             disabled={loading}
-           >
-             <Github className="mr-2 h-4 w-4" /> Continue with GitHub
-           </Button>
-         </div>
       </CardContent>
       <CardFooter className="flex flex-col space-y-4">
         <div className="text-sm text-center text-muted-foreground min-h-5">
@@ -311,6 +320,9 @@ export default function LoginForm({ onLogin }: { onLogin?: (user: any) => void }
               </a>
             </>
           )}
+        </div>
+        <div className="text-xs text-center text-muted-foreground">
+          Need help? <a href="mailto:support@example.com" className="underline underline-offset-2">Contact support</a>
         </div>
       </CardFooter>
     </Card>
