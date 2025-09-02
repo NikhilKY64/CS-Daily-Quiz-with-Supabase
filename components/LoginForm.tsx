@@ -179,7 +179,7 @@ export default function LoginForm({ onLogin }: { onLogin?: (user: any) => void }
         </div>
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label htmlFor="password">Create Password</Label>
+            <Label htmlFor="password">Password</Label>
             {!isSignUp && (
               <a 
                 href="#" 
@@ -211,7 +211,7 @@ export default function LoginForm({ onLogin }: { onLogin?: (user: any) => void }
             <Input
               id="password"
               type="password"
-              placeholder={isSignUp ? "Create a password" : "Create Your password"}
+              placeholder={isSignUp ? "Create a password" : "Create a password"}
               value={password}
               onChange={e => setPassword(e.target.value)}
               className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
