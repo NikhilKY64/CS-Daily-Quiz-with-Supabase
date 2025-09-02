@@ -211,7 +211,7 @@ export default function LoginForm({ onLogin }: { onLogin?: (user: any) => void }
             <Input
               id="password"
               type="password"
-              placeholder={isSignUp ? "Create a password" : "Create a password"}
+              placeholder={isSignUp ? "a password" : "Create a password"}
               value={password}
               onChange={e => setPassword(e.target.value)}
               className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
