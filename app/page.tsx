@@ -9,6 +9,7 @@ import LoginForm from "@/components/LoginForm"
 import { supabase } from "@/lib/supabaseClient"
 import { getProfile } from "@/lib/supabaseClient"
 
+
 type UserRole = "student" | "teacher"
 
 export default function HomePage() {
@@ -17,6 +18,7 @@ export default function HomePage() {
   const [user, setUser] = useState<any>(null)
   const [userName, setUserName] = useState<string>("") 
   const [isNewUser, setIsNewUser] = useState<boolean>(false)
+
 
   useEffect(() => {
     const init = async () => {
@@ -77,6 +79,7 @@ export default function HomePage() {
       <div className="min-h-screen bg-background text-foreground">
         <main className="container mx-auto px-4 py-8">
           <LoginForm onLogin={(u) => setUser(u)} />
+
         </main>
       </div>
     )
@@ -103,6 +106,8 @@ export default function HomePage() {
       />
 
       <main className="container mx-auto px-4 py-8 bg-background">
+
+        
         {userRole === "student" ? (
           <div className="space-y-6">
             <div className="text-center space-y-2">

@@ -86,6 +86,21 @@ export async function getStudentData(): Promise<StudentProgress> {
     }
   }
 
+  // Normalize today_completed flag based on last_attempt_date vs today (UTC day)
+  const todayUtc = new Date().toISOString().split('T')[0]
+  let normalizedTodayCompleted = !!profile.today_completed
+  console.log('[getStudentData] Loaded profile:', profile)
+  // Reset today_completed if it's a new day
+  if (profile.last_attempt_date !== todayUtc && normalizedTodayCompleted) {
+    try {
+      const updateRes = await updateProfile(userId, { today_completed: false })
+      normalizedTodayCompleted = false
+      console.log('[getStudentData] Reset today_completed to false for new day. Update result:', updateRes)
+    } catch (e) {
+      console.warn('[getStudentData] Failed to reset today_completed:', e)
+    }
+  }
+
   // Attempts and history are best-effort; do not fail user profile rendering
   let attempts: any[] = []
   try {
@@ -146,7 +161,7 @@ export async function getStudentData(): Promise<StudentProgress> {
     totalPoints: effectiveTotalPoints,
     currentStreak: profile.current_streak,
     lastAttemptDate: profile.last_attempt_date,
-    todayCompleted: profile.today_completed,
+    todayCompleted: normalizedTodayCompleted,
     lastQuizScore: profile.last_quiz_score,
     lastQuizPercentage: profile.last_quiz_percentage,
     quizHistory
@@ -176,7 +191,16 @@ export async function saveStudentData(data: StudentProgress): Promise<void> {
 export async function getAllStudents(): Promise<StudentProgress[]> {
   try {
     const profiles = await getAllProfiles()
-    return profiles.map(profile => ({
+    return profiles.map((profile: { 
+      id: string;
+      name: string;
+      total_points: number;
+      current_streak: number;
+      last_attempt_date: string | null;
+      today_completed: boolean;
+      last_quiz_score?: number;
+      last_quiz_percentage?: number;
+    }) => ({
       studentId: profile.id,
       studentName: profile.name,
       totalPoints: profile.total_points,
@@ -209,19 +233,15 @@ export async function completeQuiz(result: QuizResult): Promise<StudentProgress>
     const userId = await getCurrentStudentId()
     if (!userId) throw new Error('No authenticated user')
 
-    // Create quiz attempt in Supabase - this now handles streak and points calculation
-    const attempt = await createQuizAttempt(
-      userId,
-      result.score,
-      result.totalQuestions,
-      result.timeSpent
-    )
-
-    // Save quiz attempt questions
-    if (result.questions.length > 0) {
-      await createQuizAttemptQuestions(attempt.id, result.questions)
+    // Save to results table for progress tracking
+    try {
+      await import('./supabaseClient').then(({ saveQuizResult }) =>
+        saveQuizResult(userId, result.score, result.totalQuestions, result.timeSpent)
+      );
+    } catch (err) {
+      console.error('Error saving to results table:', err);
     }
-    
+
     // Get updated student data after the quiz completion
     const updatedData = await getStudentData()
     return updatedData

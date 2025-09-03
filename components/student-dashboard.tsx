@@ -30,6 +30,7 @@ export function StudentDashboard({ quizTitle, currentStudent }: StudentDashboard
     todayCompleted: false,
     lastQuizScore: 0,
     lastQuizPercentage: 0,
+    quizHistory: [] as { score: number }[],
   })
   const [showQuiz, setShowQuiz] = useState(false)
   const [showProgress, setShowProgress] = useState(false)
@@ -48,6 +49,7 @@ export function StudentDashboard({ quizTitle, currentStudent }: StudentDashboard
         todayCompleted: data.todayCompleted,
         lastQuizScore: data.lastQuizScore || 0,
         lastQuizPercentage: data.lastQuizPercentage || 0,
+        quizHistory: data.quizHistory || [],
       })
       const canTake = await canTakeQuizToday()
       setCanTakeQuiz(canTake)
@@ -60,14 +62,15 @@ export function StudentDashboard({ quizTitle, currentStudent }: StudentDashboard
 
   useEffect(() => {
     if (currentStudent) {
-      setStudentData({
+      setStudentData((prev) => ({
+        ...prev,
         totalPoints: currentStudent.totalPoints || 0,
         currentStreak: currentStudent.currentStreak || 0,
         lastAttemptDate: currentStudent.lastAttemptDate,
         todayCompleted: currentStudent.todayCompleted || false,
         lastQuizScore: currentStudent.lastQuizScore || 0,
         lastQuizPercentage: currentStudent.lastQuizPercentage || 0,
-      })
+      }))
       setLoading(false)
     } else {
       loadStudentData()
@@ -179,7 +182,7 @@ export function StudentDashboard({ quizTitle, currentStudent }: StudentDashboard
             <Flame className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-accent">{studentData.currentStreak}</div>
+            <div className="text-2xl font-bold text-red-700 dark:text-red-500">{studentData.currentStreak}</div>
             <p className="text-xs text-muted-foreground">days in a row</p>
           </CardContent>
         </Card>
@@ -257,15 +260,16 @@ export function StudentDashboard({ quizTitle, currentStudent }: StudentDashboard
           </CardContent>
         </Card>
 
+
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Clock className="h-5 w-5 text-primary" />
               Progress
             </CardTitle>
+            <div className="text-muted-foreground text-base mt-1 ml-7">Track your learning journey</div>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground mb-3">Track your learning journey</p>
             <Button variant="outline" className="w-full bg-transparent" onClick={handleShowProgress}>
               View History
             </Button>

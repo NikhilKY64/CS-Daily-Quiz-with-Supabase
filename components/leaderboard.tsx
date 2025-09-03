@@ -19,18 +19,33 @@ export function Leaderboard({ onBack, userRole = "student" }: LeaderboardProps) 
   const [students, setStudents] = useState<StudentProgress[]>([])
   const [sortBy, setSortBy] = useState<SortBy>("points")
   const [currentStudent, setCurrentStudent] = useState<StudentProgress | null>(null)
+  const [nextReset, setNextReset] = useState<string | null>(null)
+  const [daysUntilReset, setDaysUntilReset] = useState<number | null>(null)
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         // Import the getLeaderboard function from supabaseClient
-        const { getLeaderboard } = await import('@/lib/supabaseClient')
+        const { getLeaderboard, getLeaderboardMeta } = await import('@/lib/supabaseClient')
         
         // Get leaderboard data directly from Supabase
         const leaderboardData = await getLeaderboard(20) // Get top 20 students
         
         // Get current student data
         const current = await getStudentData()
+        
+        // Get leaderboard meta data for reset countdown
+        const leaderboardMeta = await getLeaderboardMeta()
+        if (leaderboardMeta?.next_reset) {
+          setNextReset(leaderboardMeta.next_reset)
+          
+          // Calculate days until reset
+          const nextResetDate = new Date(leaderboardMeta.next_reset)
+          const today = new Date()
+          const diffTime = nextResetDate.getTime() - today.getTime()
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+          setDaysUntilReset(diffDays)
+        }
         
         // Convert leaderboard data to StudentProgress format
         const leaderboardStudents = leaderboardData.map(profile => ({
@@ -54,7 +69,7 @@ export function Leaderboard({ onBack, userRole = "student" }: LeaderboardProps) 
         console.error('Error fetching leaderboard data:', error)
       }
     }
-    
+
     fetchData()
   }, [])
 
@@ -92,7 +107,7 @@ export function Leaderboard({ onBack, userRole = "student" }: LeaderboardProps) 
         return <Award className="h-6 w-6 text-amber-600" />
       default:
         return (
-          <div className="w-6 h-6 flex items-center justify-center text-sm font-bold text-muted-foreground">
+          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary shadow-sm border border-primary/20">
             #{rank}
           </div>
         )
@@ -108,7 +123,7 @@ export function Leaderboard({ onBack, userRole = "student" }: LeaderboardProps) 
       case 3:
         return <Badge className="bg-amber-600 hover:bg-amber-700">3rd Place</Badge>
       default:
-        return <Badge variant="outline">#{rank}</Badge>
+        return <Badge variant="outline" className="border-primary/20 bg-primary/5 text-primary hover:bg-primary/10">#{rank}</Badge>
     }
   }
 
@@ -141,6 +156,11 @@ export function Leaderboard({ onBack, userRole = "student" }: LeaderboardProps) 
         <div>
           <h2 className="text-3xl font-bold text-foreground">Leaderboard</h2>
           <p className="text-muted-foreground">See how you rank against other students</p>
+          {daysUntilReset !== null && (
+            <p className="text-sm text-primary mt-1">
+              Leaderboard will reset in {daysUntilReset} {daysUntilReset === 1 ? 'day' : 'days'}
+            </p>
+          )}
         </div>
         <Button variant="outline" onClick={onBack}>
           <ChevronLeft className="h-4 w-4 mr-2" />
@@ -150,8 +170,8 @@ export function Leaderboard({ onBack, userRole = "student" }: LeaderboardProps) 
 
       {/* Current Student Rank (for students only) */}
       {userRole === "student" && currentStudent && (
-        <Card className="border-primary/20">
-          <CardHeader>
+        <Card className="border-primary/20 shadow-md hover:shadow-lg transition-shadow duration-300">
+          <CardHeader className="bg-primary/5">
             <CardTitle className="flex items-center gap-2">
               <Trophy className="h-5 w-5 text-primary" />
               Your Ranking
