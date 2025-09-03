@@ -7,50 +7,95 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Calendar, TrendingUp, Target, Clock, Award, ChevronLeft, ChevronRight } from "lucide-react"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts"
-import { getStudentData, type StudentProgress } from "@/lib/student-storage"
+import { supabase } from "@/lib/supabaseClient"
 
 interface ProgressTrackingProps {
   onBack: () => void
 }
-
 export function ProgressTracking({ onBack }: ProgressTrackingProps) {
-  console.log('ProgressTracking component is rendering!')
-  const [studentData, setStudentData] = useState<StudentProgress | null>(null)
-  const [timeRange, setTimeRange] = useState("30") // days
-  const [currentPage, setCurrentPage] = useState(0)
-  const itemsPerPage = 5
+  const [quizHistory, setQuizHistory] = useState<any[]>([]);
+  const [currentStreak, setCurrentStreak] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [timeRange, setTimeRange] = useState("30"); // days
+  const [currentPage, setCurrentPage] = useState(0);
+  const itemsPerPage = 5;
 
   useEffect(() => {
-    const loadData = async () => {
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
       try {
-        console.log('=== LOADING PROGRESS DATA ===')
-        const data = await getStudentData()
-        console.log('Progress data loaded:', data)
-        console.log('Quiz history length:', data.quizHistory?.length || 0)
-        setStudentData(data)
-      } catch (error) {
-        console.error('Error loading student data:', error)
-      }
-    }
-    loadData()
-  }, [])
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Not logged in");
+        // Fetch quiz attempts (replace 'results' with your table if needed)
+        const { data, error } = await supabase
+          .from("results")
+          .select("id, score, total_questions, created_at, time_spent")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: true });
+        if (error) throw error;
+        setQuizHistory((data || []).map(q => ({
+          date: q.created_at,
+          score: q.score,
+          totalQuestions: q.total_questions,
+          timeSpent: q.time_spent || 0,
+        })));
 
-  if (!studentData) {
-    console.log('ProgressTracking: No student data yet, showing loading...')
+        // Calculate streak (consecutive days with a quiz)
+        let streak = 0;
+        let prevDate: string | null = null;
+        for (let i = (data || []).length - 1; i >= 0; i--) {
+          const d = new Date(data[i].created_at);
+          d.setHours(0,0,0,0);
+          if (!prevDate) {
+            prevDate = d.toISOString();
+            streak = 1;
+          } else {
+            const prev = new Date(prevDate);
+            prev.setDate(prev.getDate() - 1);
+            if (d.getTime() === prev.getTime()) {
+              streak++;
+              prevDate = d.toISOString();
+            } else {
+              break;
+            }
+          }
+        }
+        setCurrentStreak(streak);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (loading) {
     return (
       <Card className="w-full max-w-4xl mx-auto">
         <CardContent className="py-8 text-center">
           <p className="text-muted-foreground">Loading progress data...</p>
         </CardContent>
       </Card>
-    )
+    );
+  }
+  if (error) {
+    return (
+      <Card className="w-full max-w-4xl mx-auto">
+        <CardContent className="py-8 text-center">
+          <p className="text-red-500">{error}</p>
+        </CardContent>
+      </Card>
+    );
   }
 
   // Filter quiz history based on time range
   const cutoffDate = new Date()
   cutoffDate.setDate(cutoffDate.getDate() - Number.parseInt(timeRange))
 
-  const filteredHistory = studentData.quizHistory.filter((quiz) => new Date(quiz.date) >= cutoffDate)
+  const filteredHistory = quizHistory.filter((quiz) => new Date(quiz.date) >= cutoffDate);
 
   // Prepare chart data
   const chartData = filteredHistory.map((quiz) => ({
@@ -66,8 +111,8 @@ export function ProgressTracking({ onBack }: ProgressTrackingProps) {
   const averagePercentage = totalQuizzes > 0 ? (averageScore / 5) * 100 : 0 // Assuming 5 questions per quiz
   const averageTime =
     totalQuizzes > 0 ? filteredHistory.reduce((sum, quiz) => sum + quiz.timeSpent, 0) / totalQuizzes / 1000 / 60 : 0 // minutes
-  const bestScore = totalQuizzes > 0 ? Math.max(...filteredHistory.map((quiz) => quiz.score)) : 0
-  const currentStreak = studentData.currentStreak
+  const bestScore = totalQuizzes > 0 ? Math.max(...filteredHistory.map((quiz) => quiz.score)) : 0;
+  // currentStreak is now from state
 
   // Pagination for quiz history
   const paginatedHistory = filteredHistory.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage)
@@ -101,16 +146,17 @@ export function ProgressTracking({ onBack }: ProgressTrackingProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-2">
         <div>
-          <h2 className="text-3xl font-bold text-foreground">Progress Tracking</h2>
-          <p className="text-muted-foreground">Track your learning journey and performance over time</p>
+          <h2 className="text-3xl font-bold text-foreground">Progress</h2>
+          <div className="text-muted-foreground text-base mt-1">Track your learning journey</div>
         </div>
         <Button variant="outline" onClick={onBack}>
           <ChevronLeft className="h-4 w-4 mr-2" />
           Back to Dashboard
         </Button>
       </div>
+
 
       {/* Time Range Filter */}
       <Card>

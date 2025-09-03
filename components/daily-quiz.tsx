@@ -34,6 +34,19 @@ export function DailyQuiz({ onComplete, onExit }: DailyQuizProps) {
   // Tracks per-question evaluation after user clicks Next/Submit
   const [evaluation, setEvaluation] = useState<Array<"pending" | "correct" | "wrong">>([])
   const [lockedAnswers, setLockedAnswers] = useState<boolean[]>([])
+  // For two-step last question navigation
+  const [showLastNextButton, setShowLastNextButton] = useState(true);
+
+  // Show Next on last question first, then Submit
+  const handleLastNext = () => {
+    setShowLastNextButton(false);
+  };
+
+  useEffect(() => {
+    if (currentQuestionIndex !== questions.length - 1) {
+      setShowLastNextButton(true);
+    }
+  }, [currentQuestionIndex, questions.length]);
 
   useEffect(() => {
     const loadQuestions = async () => {
@@ -373,13 +386,20 @@ export function DailyQuiz({ onComplete, onExit }: DailyQuizProps) {
         </Button>
 
         {currentQuestionIndex === questions.length - 1 ? (
-          <Button
+          showLastNextButton ? (
+            <Button onClick={handleLastNext} disabled={answers[currentQuestionIndex] === -1}>
+              Next
+              <ChevronRight className="h-4 w-4 ml-2" />
+            </Button>
+          ) : (
+            <Button
               onClick={() => setShowSubmitConfirm(true)}
-            disabled={answers.some((answer) => answer === -1)}
-            className="bg-green-600 hover:bg-green-700"
-          >
-            Submit Quiz
-          </Button>
+              disabled={answers.some((answer) => answer === -1)}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              Submit Quiz
+            </Button>
+          )
         ) : (
           <Button onClick={handleNext} disabled={answers[currentQuestionIndex] === -1}>
             Next
