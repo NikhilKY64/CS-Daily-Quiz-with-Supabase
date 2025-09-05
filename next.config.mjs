@@ -5,10 +5,6 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  images: {
-    unoptimized: true,
-  },
-  output: 'standalone',
 }
 
 export default nextConfig

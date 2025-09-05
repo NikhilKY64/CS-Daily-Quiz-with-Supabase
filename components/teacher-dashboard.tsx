@@ -19,6 +19,7 @@ import { QuestionPreview } from "@/components/question-preview"
 import { Leaderboard } from "@/components/leaderboard"
 import { ImportExportDialog } from "@/components/import-export-dialog"
 import { getQuestionBank, addQuestion, updateQuestion } from "@/lib/question-storage"
+import { getQuizTitle, updateQuizTitle } from '../lib/import-export'
 import type { Question } from "@/lib/types"
 
 interface TeacherDashboardProps {
@@ -43,19 +44,30 @@ export function TeacherDashboard({ quizTitle, onTitleChange }: TeacherDashboardP
       const questions = await getQuestionBank()
       setQuestionCount(Object.keys(questions).length)
 
-      const { getAllProfiles } = await import('@/lib/supabaseClient')
+      const { getAllProfiles } = await import('@/lib/supabaseClient.js')
       const students = await getAllProfiles()
-      setStudentCount(students.length)
+      setStudentCount(students ? students.length : 0)
     } catch (error) {
       console.error('Error loading dashboard data:', error)
+      // Show a more user-friendly error message
+      alert('Failed to load dashboard data. Please try refreshing the page.')
     }
   }
+
+  useEffect(() => {
+    async function fetchTitle() {
+      const title = await getQuizTitle()
+      setTempTitle(title)
+    }
+    fetchTitle()
+  }, [])
 
   useEffect(() => {
     loadData()
   }, [])
 
-  const handleTitleSave = () => {
+  const handleTitleSave = async () => {
+    await updateQuizTitle(tempTitle)
     onTitleChange(tempTitle)
     setIsEditingTitle(false)
   }
@@ -73,17 +85,26 @@ export function TeacherDashboard({ quizTitle, onTitleChange }: TeacherDashboardP
 
   const handleSaveQuestion = async (questionData: Omit<Question, "id" | "createdAt" | "updatedAt">) => {
     try {
+      console.log('Saving question:', questionData)
+      console.log('Is editing?', editingQuestion ? 'Yes' : 'No')
+      
       if (editingQuestion) {
+        console.log('Updating question with ID:', editingQuestion.id)
         await updateQuestion(editingQuestion.id, questionData)
       } else {
+        console.log('Adding new question')
         await addQuestion(questionData)
       }
 
+      console.log('Question saved successfully')
       setShowQuestionForm(false)
       setEditingQuestion(null)
-      await loadData()  
+      await loadData()
     } catch (error) {
-      console.error('Error saving question:', error)
+  console.error('Error saving question:', error)
+  // Show detailed message if available
+  const message = (error as any)?.message ? (error as any).message : String(error)
+  alert('Failed to save question. ' + message)
     }
   }
 

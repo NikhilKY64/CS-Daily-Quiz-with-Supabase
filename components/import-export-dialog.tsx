@@ -22,6 +22,7 @@ interface ImportExportDialogProps {
 export function ImportExportDialog({ isOpen, onClose, mode, onImportComplete }: ImportExportDialogProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [replaceExisting, setReplaceExisting] = useState(false)
+  const [pendingReplaceConfirm, setPendingReplaceConfirm] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [result, setResult] = useState<ImportResult | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -163,16 +164,49 @@ export function ImportExportDialog({ isOpen, onClose, mode, onImportComplete }: 
               </div>
 
               {/* Import Options */}
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="replace-existing"
-                  checked={replaceExisting}
-                  onCheckedChange={(checked) => setReplaceExisting(checked as boolean)}
-                />
-                <Label htmlFor="replace-existing" className="text-sm">
-                  Replace all existing questions
-                </Label>
+              <div className="flex items-center">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="replace-existing"
+                    checked={replaceExisting}
+                    onCheckedChange={(checked) => {
+                      // If user is attempting to enable replace, show inline confirmation to the right
+                      if (checked === true) {
+                        setPendingReplaceConfirm(true)
+                      } else {
+                        setReplaceExisting(false)
+                        setPendingReplaceConfirm(false)
+                      }
+                    }}
+                  />
+                  <Label htmlFor="replace-existing" className="text-sm">
+                    Replace all existing questions
+                  </Label>
+                </div>
+
+                {/* Inline right-side confirmation controls when enabling replace */}
+                {pendingReplaceConfirm && (
+                  <div className="ml-4 flex items-center gap-2">
+                    <span className="text-sm text-destructive">This will delete existing questions.</span>
+                    <Button size="sm" variant="outline" onClick={() => {
+                      setPendingReplaceConfirm(false)
+                      setReplaceExisting(false)
+                    }}>
+                      Cancel
+                    </Button>
+                    <Button size="sm" variant="destructive" onClick={() => {
+                      setReplaceExisting(true)
+                      setPendingReplaceConfirm(false)
+                    }}>
+                      Confirm
+                    </Button>
+                  </div>
+                )}
               </div>
+
+              {/* destructive inline alert removed; confirmation handled inline to the right */}
+
+              {/* inline confirmation handled to the right of the checkbox */}
 
               {/* Sample File Download */}
               <div className="border rounded-lg p-3 bg-muted/50">

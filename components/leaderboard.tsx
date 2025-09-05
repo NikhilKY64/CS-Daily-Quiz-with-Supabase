@@ -48,7 +48,7 @@ export function Leaderboard({ onBack, userRole = "student" }: LeaderboardProps) 
         }
         
         // Convert leaderboard data to StudentProgress format
-        const leaderboardStudents = leaderboardData.map(profile => ({
+        const leaderboardStudents = leaderboardData.map((profile: { id?: string; name?: string; total_points?: number; current_streak?: number; }) => ({
           studentId: profile.id || '',
           studentName: profile.name || '',
           totalPoints: profile.total_points || 0,
@@ -59,7 +59,7 @@ export function Leaderboard({ onBack, userRole = "student" }: LeaderboardProps) 
         }))
         
         // Make sure current student is in the list
-        if (current && !leaderboardStudents.find(s => s.studentId === current.studentId)) {
+        if (current && !leaderboardStudents.find((s: StudentProgress) => s.studentId === current.studentId)) {
           leaderboardStudents.push(current)
         }
         

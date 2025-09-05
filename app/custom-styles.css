@@ -62,3 +62,143 @@ p:hover {
 .dark p:hover {
   color: #ffffff !important;
 }
+
+/* Custom hold-menu styles (copied/provided by user) */
+/* <reset-style> ============================ */
+/*
+  Narrow the reset so it only affects the hold-menu button used in
+  `components/hold-menu-button.tsx` (the button inside `.background`).
+  A global `button { background: none }` removed Tailwind `bg-*` styles
+  and caused many buttons to render white — scope prevents that.
+*/
+.background > button,
+.menu__icon {
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+/* ============================ */
+/* <style for bg> ======== */
+.background {
+  border-radius: 16px;
+  border: 1px solid #1a1a1a;
+  /* dark blue base button */
+  background: rgba(30, 64, 175, 0.14); /* blue-800 low opacity */
+  mix-blend-mode: normal;
+  box-shadow: 0px 8px 22px rgba(30,64,175,0.10);
+  backdrop-filter: blur(15px);
+  width: 59px;
+  height: 59px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* <style for menu__icon> ======== */
+.menu__icon {
+  position: relative;
+  width: 29px;
+  height: 29px;
+  padding: 3px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.menu__icon span {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  height: 2px;
+  border-radius: 2px;
+  background-color: #ffffff;
+  box-shadow: 0 .5px 2px 0 rgba(0,0,0,0.12);
+  transition: top 220ms ease, bottom 220ms ease, transform 220ms cubic-bezier(.2,.8,.2,1), opacity 180ms ease, background-color 180ms ease;
+  transform-origin: center;
+}
+
+/* initial stacked positions */
+.menu__icon span:nth-child(1) { top: 5px; }
+.menu__icon span:nth-child(2) { top: 50%; transform: translateY(-50%); }
+.menu__icon span:nth-child(3) { bottom: 5px; }
+
+
+/* show cross when menu is open (clicked), not on hover */
+.menu__icon.open span:nth-child(1),
+.menu__icon.holding span:nth-child(1) {
+  background-color: rgb(255, 59, 48);
+  top: 50%;
+  transform: translateY(-50%) rotate(-45deg);
+}
+
+.menu__icon.open span:nth-child(2),
+.menu__icon.holding span:nth-child(2) {
+  transform: scaleX(0);
+  opacity: 0;
+}
+
+.menu__icon.open span:nth-child(3),
+.menu__icon.holding span:nth-child(3) {
+  background-color: rgb(255, 59, 48);
+  bottom: auto;
+  top: 50%;
+  transform: translateY(-50%) rotate(45deg);
+}
+
+/* style adjustments to better match header */
+.background {
+  border-radius: 6px;
+  border: 1px solid rgba(30,64,175,0.6); /* darker blue border */
+  background: rgba(30,64,175,0.12);
+  width: 43px;
+  height: 43px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.menu__icon {
+  width: 25px;
+  height: 25px;
+  padding: 2px;
+}
+.menu__icon span {
+  background-color: var(--muted-foreground, rgb(99,102,241));
+  height: 2px;
+  border-radius: 2px;
+}
+
+/* slide menu styles */
+.slide-menu {
+  position: fixed;
+  top: 0;
+  left: -320px; /* hidden off-screen on the left */
+  right: auto;
+  width: 320px;
+  height: 100vh;
+  background: var(--card, #fff);
+  /* shadow casts to the right when menu is on the left */
+  box-shadow: 8px 0 24px rgba(0,0,0,0.12);
+  transition: left 300ms ease;
+  z-index: 1000; /* ensure it's above other overlays */
+}
+.slide-menu.open {
+  left: 0; /* slide into view from left to right */
+}
+.slide-menu .p-4 {
+  height: 100%;
+  overflow-y: auto;
+}
+
+/* optional backdrop */
+.slide-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  z-index: 50;
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+.slide-menu-backdrop.show {
+  opacity: 1;
+}

@@ -1,11 +1,13 @@
 import type { Question, QuestionBank } from "./types"
 import { getQuestionBank, getQuizMetadata, addQuestion } from "./question-storage"
+import { getClient } from './supabaseClient'
 
 export interface ImportResult {
   success: boolean
   message: string
   importedCount?: number
   errors?: string[]
+  solution?: string
 }
 
 export function validateQuestion(question: any): question is Question {
@@ -41,33 +43,78 @@ export function validateQuestionBank(data: any): data is QuestionBank {
 
 export async function exportQuestions(): Promise<void> {
   try {
-    const questions = await getQuestionBank()
-    const metadata = await getQuizMetadata()
+    // Primary path: use existing helpers
+    let questions: any = null
+    let metadata: any = null
+    try {
+      questions = await getQuestionBank()
+    } catch (e) {
+      console.warn('[exportQuestions] getQuestionBank failed, will fallback to direct fetch:', e)
+    }
+    try {
+      metadata = await getQuizMetadata()
+    } catch (e) {
+      console.warn('[exportQuestions] getQuizMetadata failed, using safe defaults:', e)
+    }
+
+    // Fallback: if questions is null or empty, fetch directly via Supabase client
+    let questionsArray: any[] = []
+    if (questions) {
+      questionsArray = Array.isArray(questions) ? questions : Object.values(questions || {})
+    }
+
+    if (!questionsArray || questionsArray.length === 0) {
+      // Dynamic import to ensure this runs on client and uses the client supabase instance
+      try {
+        const { supabase } = await import('./supabaseClient')
+        const { data, error } = await supabase.from('quiz_questions').select('*').order('created_at', { ascending: false })
+        if (error) throw error
+        // Map rows to Question shape
+        questionsArray = (data || []).map((q: any) => ({
+          id: q.id?.toString?.() || crypto.randomUUID(),
+          question: q.question,
+          options: q.options,
+          correctAnswer: q.correct_answer,
+          explanation: q.explanation ?? '',
+          category: q.category ?? 'General',
+          difficulty: q.difficulty ?? 'Medium',
+          createdAt: q.created_at ?? new Date().toISOString(),
+          updatedAt: q.updated_at ?? new Date().toISOString(),
+        }))
+      } catch (fetchErr) {
+        console.error('[exportQuestions] direct fetch failed:', fetchErr)
+        throw fetchErr
+      }
+    }
+
+    const questionCount = questionsArray.length
+    const safeTitle = (metadata as any)?.title || `question_bank`
 
     const questionBank: QuestionBank = {
-      questions: Object.values(questions),
+      questions: questionsArray,
       metadata: {
-        title: metadata.title,
-        description: `Exported question bank with ${Object.keys(questions).length} questions`,
-        createdAt: metadata.createdAt,
+        title: safeTitle,
+        description: `Exported question bank with ${questionCount} questions`,
+        createdAt: (metadata as any)?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       },
     }
 
     const dataStr = JSON.stringify(questionBank, null, 2)
-    const dataBlob = new Blob([dataStr], { type: "application/json" })
+    const dataBlob = new Blob([dataStr], { type: 'application/json' })
 
     const url = URL.createObjectURL(dataBlob)
-    const link = document.createElement("a")
+    const link = document.createElement('a')
     link.href = url
-    link.download = `${metadata.title.replace(/[^a-z0-9]/gi, "_").toLowerCase()}_questions.json`
+    // Use safeTitle for filename and sanitize
+    link.download = `${safeTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_questions.json`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
     URL.revokeObjectURL(url)
   } catch (error) {
-    console.error("Export failed:", error)
-    throw new Error("Failed to export questions. Please try again.")
+    console.error('Export failed:', error)
+    throw new Error('Failed to export questions. Please try again.')
   }
 }
 
@@ -92,7 +139,8 @@ export function importQuestions(file: File, replaceExisting = false): Promise<Im
         } catch (parseError) {
           resolve({
             success: false,
-            message: "Invalid JSON format. Please check your file.",
+            message: "Invalid JSON. The file should have the same format as in the sample file",
+            solution: `How to fix your file:\n1. Download the sample question file from the import dialog.\n2. Open both your file and the sample in a text editor.\n3. Copy the sample and your file content, then paste both into an AI tool like ChatGPT.\n4. Ask the AI to reformat your questions to match the sample structure and make the result downloadable as a JSON file.\n5. Download the corrected file and try importing again.`,
           })
           return
         }
@@ -107,7 +155,8 @@ export function importQuestions(file: File, replaceExisting = false): Promise<Im
         } else {
           resolve({
             success: false,
-            message: "Invalid file format. Expected question bank or questions array.",
+            message: "Invalid JSON. The file should have the same format as in the sample file",
+            solution: `How to fix your file:\n1. Download the sample question file from the import dialog.\n2. Open both your file and the sample in a text editor.\n3. Copy the sample and your file content, then paste both into an AI tool like ChatGPT.\n4. Ask the AI to reformat your questions to match the sample structure and make the result downloadable as a JSON file.\n5. Download the corrected file and try importing again.`,
           })
           return
         }
@@ -127,8 +176,9 @@ export function importQuestions(file: File, replaceExisting = false): Promise<Im
         if (validQuestions.length === 0) {
           resolve({
             success: false,
-            message: "No valid questions found in the file.",
+            message: "Invalid JSON. The file should have the same format as in the sample file",
             errors,
+            solution: `How to fix your file:\n1. Download the sample question file from the import dialog.\n2. Open both your file and the sample in a text editor.\n3. Copy the sample and your file content, then paste both into an AI tool like ChatGPT.\n4. Ask the AI to reformat your questions to match the sample structure and make the result downloadable as a JSON file.\n5. Download the corrected file and try importing again.`,
           })
           return
         }
@@ -136,6 +186,19 @@ export function importQuestions(file: File, replaceExisting = false): Promise<Im
         // Import questions
         const existingQuestions = replaceExisting ? {} : await getQuestionBank()
         const existingIds = new Set(Object.keys(existingQuestions))
+
+        if (replaceExisting) {
+          try {
+            // Remove all existing questions before importing
+            await import('./truncate-questions').then(mod => mod.truncateQuizQuestions())
+          } catch (err) {
+            resolve({
+              success: false,
+              message: 'Failed to remove existing questions before import: ' + (err instanceof Error ? err.message : 'Unknown error'),
+            })
+            return
+          }
+        }
 
         // Filter out duplicates and update IDs if necessary
         const questionsToAdd = validQuestions.map((question) => {
@@ -277,4 +340,25 @@ export function generateSampleQuestions(): QuestionBank {
       updatedAt: new Date().toISOString(),
     },
   }
+}
+
+export async function getQuizTitle() {
+  const supabase = getClient();
+  // use maybeSingle so we don't error if the table is empty
+  const { data, error } = await supabase
+    .from('quiz_meta')
+    .select('quiz_title')
+    .maybeSingle();
+  if (error) throw error;
+  return data && (data as any).quiz_title ? (data as any).quiz_title : 'Daily Quiz';
+}
+
+export async function updateQuizTitle(newTitle: string) {
+  const supabase = getClient();
+  // Use upsert to create or update the single meta row so the title persists for all users
+  const payload = { quiz_id: 1, quiz_title: newTitle }
+  const { error } = await supabase
+    .from('quiz_meta')
+    .upsert(payload, { onConflict: 'quiz_id' })
+  if (error) throw error;
 }
