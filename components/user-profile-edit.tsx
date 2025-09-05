@@ -3,16 +3,14 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog"
-// Remove duplicate import since it's already imported below
-// Create a new file at @/lib/profile.ts with this function:
-// export async function updateProfile(userId: string, updates: { name: string }) {
-//   const { error } = await supabase
-//     .from('profiles')
-//     .update(updates)
-//     .eq('id', userId)
-//   if (error) throw error
-// }
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog"
 import { supabase } from "@/lib/supabaseClient"
 
 async function updateProfile(userId: string, updates: { name: string }) {
@@ -22,42 +20,27 @@ async function updateProfile(userId: string, updates: { name: string }) {
     .eq('id', userId)
   if (error) throw error
 }
-import { Pencil } from "lucide-react"
 
 interface UserProfileEditProps {
-  userId: string
+  isOpen: boolean
+  onOpenChange: (isOpen: boolean) => void
   userName: string
   onNameUpdate: (newName: string) => void
+  onSignOut: () => void;
 }
 
-export function UserProfileEdit({ userId, userName, onNameUpdate }: UserProfileEditProps) {
-  const [isOpen, setIsOpen] = useState(false)
+export function UserProfileEdit({
+  isOpen,
+  onOpenChange,
+  userName,
+  onNameUpdate,
+  onSignOut,
+}: UserProfileEditProps) {
   const [name, setName] = useState(userName)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<boolean>(false)
-  
-  const [actualUserId, setActualUserId] = useState<string>(userId)
 
-  useEffect(() => {
-    // If userId is 'current', get the current user's ID from Supabase
-    const getCurrentUserId = async () => {
-      if (userId === 'current') {
-        try {
-          const { data } = await supabase.auth.getUser()
-          if (data?.user?.id) {
-            setActualUserId(data.user.id)
-          }
-        } catch (error) {
-          console.error('Error getting current user:', error)
-        }
-      }
-    }
-    
-    getCurrentUserId()
-  }, [userId])
-  
-  // Reset states when dialog opens/closes
   useEffect(() => {
     if (isOpen) {
       setName(userName)
@@ -71,19 +54,23 @@ export function UserProfileEdit({ userId, userName, onNameUpdate }: UserProfileE
       setError("Name cannot be empty")
       return
     }
-    
+
     setIsLoading(true)
     setError(null)
     setSuccess(false)
-    
+
     try {
-      await updateProfile(actualUserId, { name })
+      const { data } = await supabase.auth.getUser()
+      if (!data?.user?.id) {
+        throw new Error("User not found")
+      }
+
+      await updateProfile(data.user.id, { name })
       onNameUpdate(name)
       setSuccess(true)
-      
-      // Close dialog after a short delay to show success message
+
       setTimeout(() => {
-        setIsOpen(false)
+        onOpenChange(false)
       }, 1500)
     } catch (err: any) {
       setError(err.message || "Failed to update profile")
@@ -91,15 +78,9 @@ export function UserProfileEdit({ userId, userName, onNameUpdate }: UserProfileE
       setIsLoading(false)
     }
   }
-  
+
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 rounded-full hover:bg-muted">
-          <Pencil className="h-3.5 w-3.5 text-primary" />
-          <span className="sr-only">Edit profile</span>
-        </Button>
-      </DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Edit Profile</DialogTitle>
@@ -132,14 +113,14 @@ export function UserProfileEdit({ userId, userName, onNameUpdate }: UserProfileE
             </div>
           )}
         </div>
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isLoading}>
-            {success ? "Close" : "Cancel"}
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
           </Button>
           <Button onClick={handleSave} disabled={isLoading || success} className={success ? "bg-green-500" : ""}>
             {isLoading ? "Saving..." : success ? "Saved!" : "Save changes"}
           </Button>
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )

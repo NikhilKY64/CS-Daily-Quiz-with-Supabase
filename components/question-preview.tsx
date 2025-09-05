@@ -76,15 +76,17 @@ export function QuestionPreview({ onEdit, onRefresh, onBack }: QuestionPreviewPr
 
   const handleDelete = async (id: string) => {
     try {
-      const success = await deleteQuestion(id)
-      if (success) {
-        await loadQuestions()
-        onRefresh()
-      }
+      console.log('Attempting to delete question with ID:', id)
+      await deleteQuestion(id)
+      console.log('Question deleted, reloading questions')
+      await loadQuestions()
+      onRefresh()
       setDeleteId(null)
     } catch (error) {
-      console.error('Error deleting question:', error)
-      setDeleteId(null)
+  console.error('Error deleting question:', error)
+  const message = (error as any)?.message || String(error)
+  alert('Failed to delete question: ' + message + '\n\nCheck browser console for full details (network/RLS error).')
+  setDeleteId(null)
     }
   }
 

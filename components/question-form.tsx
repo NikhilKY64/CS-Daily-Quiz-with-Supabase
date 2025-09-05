@@ -52,7 +52,9 @@ export function QuestionForm({ question, onSave, onCancel, showUploadStatus = fa
       newErrors.options = "At least 2 options are required"
     }
 
-    if (formData.correctAnswer >= validOptions.length) {
+    // Check if the correct answer is valid
+    const correctOptionIndex = formData.correctAnswer;
+    if (correctOptionIndex < 0 || correctOptionIndex >= validOptions.length || !formData.options[correctOptionIndex].trim()) {
       newErrors.correctAnswer = "Please select a valid correct answer"
     }
 
@@ -67,10 +69,18 @@ export function QuestionForm({ question, onSave, onCancel, showUploadStatus = fa
 
     const validOptions = formData.options.filter((opt) => opt.trim())
 
+    // Adjust the correct answer index based on valid options
+    let adjustedCorrectAnswer = formData.correctAnswer;
+    const emptyOptionsBefore = formData.options
+      .slice(0, formData.correctAnswer)
+      .filter(opt => !opt.trim()).length;
+    
+    adjustedCorrectAnswer -= emptyOptionsBefore;
+
     const questionData = {
       question: formData.question.trim(),
       options: validOptions,
-      correctAnswer: formData.correctAnswer,
+      correctAnswer: adjustedCorrectAnswer,
       explanation: formData.explanation.trim() || undefined,
       category: formData.category.trim() || undefined,
       difficulty: formData.difficulty,
@@ -79,7 +89,8 @@ export function QuestionForm({ question, onSave, onCancel, showUploadStatus = fa
     console.log('=== QUESTION FORM SUBMITTED ===')
     console.log('Form data being sent:', questionData)
     console.log('Valid options count:', validOptions.length)
-    console.log('Correct answer index:', formData.correctAnswer)
+    console.log('Original correct answer index:', formData.correctAnswer)
+    console.log('Adjusted correct answer index:', adjustedCorrectAnswer)
 
     onSave(questionData)
   }

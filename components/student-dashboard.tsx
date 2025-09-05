@@ -67,7 +67,7 @@ export function StudentDashboard({ quizTitle, currentStudent }: StudentDashboard
         totalPoints: currentStudent.totalPoints || 0,
         currentStreak: currentStudent.currentStreak || 0,
         lastAttemptDate: currentStudent.lastAttemptDate,
-        todayCompleted: currentStudent.todayCompleted || false,
+        todayCompleted: Boolean(currentStudent.todayCompleted),
         lastQuizScore: currentStudent.lastQuizScore || 0,
         lastQuizPercentage: currentStudent.lastQuizPercentage || 0,
       }))
@@ -100,12 +100,33 @@ export function StudentDashboard({ quizTitle, currentStudent }: StudentDashboard
   }, [])
 
   const handleStartQuiz = () => {
-    setShowQuiz(true)
+  if (loading || studentData.todayCompleted) return
+  setShowQuiz(true)
   }
 
   const handleQuizComplete = async (result: QuizResult) => {
     setShowQuiz(false)
-    await loadStudentData() // Refresh student data
+    // Update local state immediately
+    setStudentData(prev => ({
+      ...prev,
+      todayCompleted: true,
+      // Also update other relevant fields to avoid UI flicker
+      lastQuizScore: result.score,
+      lastQuizPercentage: Math.round((result.score / result.totalQuestions) * 100),
+      // Increment streak if last attempt was yesterday (will be properly updated by loadStudentData later)
+      currentStreak: (() => {
+        try {
+          const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+          const prevLast = prev.lastAttemptDate ? prev.lastAttemptDate.split('T')[0] : null
+          return prevLast === yesterday ? prev.currentStreak + 1 : prev.currentStreak
+        } catch {
+          return prev.currentStreak
+        }
+      })()
+    }))
+    
+    // Then refresh all student data - but don't await to avoid UI flicker
+    loadStudentData()
   }
 
   const handleQuizExit = () => {
@@ -113,18 +134,12 @@ export function StudentDashboard({ quizTitle, currentStudent }: StudentDashboard
   }
 
   const handleShowProgress = () => {
-    console.log('=== PROGRESS BUTTON CLICKED ===')
-    console.log('Current student data:', studentData)
-    console.log('Current state - showProgress:', showProgress)
-    console.log('Current state - showQuiz:', showQuiz)
-    console.log('Current state - showLeaderboard:', showLeaderboard)
-    console.log('About to set showProgress to true')
-    console.log('Student data type:', typeof studentData)
-    console.log('Student data keys:', Object.keys(studentData || {}))
-    console.log('Total points:', studentData?.totalPoints)
-    console.log('Current streak:', studentData?.currentStreak)
+    // Only keep a lightweight debug trace in development builds
+    if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
+      console.debug('Open Progress view', { totalPoints: studentData.totalPoints, currentStreak: studentData.currentStreak })
+    }
     setShowProgress(true)
-    console.log('showProgress state set to true')
   }
 
   const handleBackFromProgress = () => {
@@ -139,7 +154,7 @@ export function StudentDashboard({ quizTitle, currentStudent }: StudentDashboard
     setShowLeaderboard(false)
   }
 
-  // canTakeQuiz is now managed in state
+  // We're now using studentData.todayCompleted directly instead of canTakeQuiz
 
   if (showLeaderboard) {
     return <Leaderboard onBack={handleBackFromLeaderboard} userRole="student" />
@@ -233,12 +248,12 @@ export function StudentDashboard({ quizTitle, currentStudent }: StudentDashboard
               <p className="text-sm font-medium">Daily Challenge</p>
               <p className="text-xs text-muted-foreground">5 multiple choice questions</p>
             </div>
-            <Badge variant={canTakeQuiz ? "default" : "secondary"}>{canTakeQuiz ? "Available" : "Completed"}</Badge>
+            <Badge variant={!studentData.todayCompleted ? "default" : "secondary"}>{!studentData.todayCompleted ? "Available" : "Completed"}</Badge>
           </div>
 
-          <Button className="w-full" disabled={!canTakeQuiz} size="lg" onClick={handleStartQuiz}>
+          <Button className="w-full" disabled={studentData.todayCompleted} size="lg" onClick={handleStartQuiz}>
             <Play className="h-4 w-4 mr-2" />
-            {canTakeQuiz ? "Start Daily Quiz" : "Quiz Completed Today"}
+            {!studentData.todayCompleted ? "Start Daily Quiz" : "Quiz Completed Today"}
           </Button>
         </CardContent>
       </Card>

@@ -7,8 +7,8 @@ export async function getQuestionBank(): Promise<QuestionBank> {
     const questions = await getQuizQuestions()
     const questionBank: QuestionBank = {} as QuestionBank
     
-    // Use map instead of forEach for better functional programming style
-    questions.map((q: any) => {
+    // Use forEach instead of map since we're not returning anything
+    questions.forEach((q: any) => {
       const question = {
         id: q.id.toString(),
         question: q.question,
@@ -101,9 +101,9 @@ export async function addQuestion(question: Omit<Question, 'id' | 'createdAt' | 
   } catch (error) {
     console.error('Error in addQuestion:', error)
     console.error('Error details:', {
-      message: error.message,
-      stack: error.stack,
-      name: error.name
+      message: (error as Error).message,
+      stack: (error as Error).stack,
+      name: (error as Error).name
     })
     console.error('Error adding question:', error)
     throw error
@@ -122,7 +122,16 @@ export async function updateQuestion(questionId: string, updates: Partial<Omit<Q
     if (updates.category !== undefined) updateData.category = updates.category
     if (updates.difficulty !== undefined) updateData.difficulty = updates.difficulty
     
-    const updatedQuestion = await updateQuizQuestion(parseInt(questionId), updateData)
+    console.log('Updating question with ID:', questionId, 'and data:', updateData)
+    
+  const updatedQuestion = await updateQuizQuestion(questionId, updateData)
+    
+    if (!updatedQuestion) {
+      console.error('No question returned from updateQuizQuestion')
+      throw new Error('Failed to update question')
+    }
+    
+    console.log('Question updated successfully:', updatedQuestion)
     
     return {
       id: updatedQuestion.id.toString(),
@@ -144,9 +153,19 @@ export async function updateQuestion(questionId: string, updates: Partial<Omit<Q
 // Delete a question from Supabase
 export async function deleteQuestion(questionId: string): Promise<void> {
   try {
-    await deleteQuizQuestion(parseInt(questionId))
+    console.log('Deleting question with ID:', questionId)
+  const result = await deleteQuizQuestion(questionId)
+    console.log('Delete question result:', result)
+
+    if (!result || result.success !== true) {
+      console.error('Failed to delete question', result)
+      throw new Error('Failed to delete question')
+    }
+
+    console.log('Question deleted successfully')
   } catch (error) {
     console.error('Error deleting question:', error)
+    // Re-throw the error so the UI can surface failures and retry if needed
     throw error
   }
 }
@@ -158,7 +177,7 @@ export async function getQuestionsByCategory(category: string): Promise<Question
     return Object.values(questionBank).filter(q => q.category === category)
   } catch (error) {
     console.error('Error getting questions by category:', error)
-    return []
+    throw error // Throw error instead of returning empty array
   }
 }
 
@@ -169,7 +188,7 @@ export async function getQuestionsByDifficulty(difficulty: string): Promise<Ques
     return Object.values(questionBank).filter(q => q.difficulty === difficulty)
   } catch (error) {
     console.error('Error getting questions by difficulty:', error)
-    return []
+    throw error // Throw error instead of returning empty array
   }
 }
 
@@ -189,12 +208,16 @@ export async function getRandomQuestions(count: number, category?: string, diffi
       questions = questions.filter(q => q.difficulty === difficulty)
     }
     
-    // Shuffle and return requested count
-    const shuffled = questions.sort(() => Math.random() - 0.5)
-    return shuffled.slice(0, count)
+    // Fisher-Yates shuffle algorithm for better randomization
+    for (let i = questions.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [questions[i], questions[j]] = [questions[j], questions[i]];
+    }
+    
+    return questions.slice(0, count)
   } catch (error) {
     console.error('Error getting random questions:', error)
-    return []
+    throw error // Throw error instead of returning empty array
   }
 }
 

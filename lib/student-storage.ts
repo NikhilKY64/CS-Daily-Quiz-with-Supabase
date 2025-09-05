@@ -88,10 +88,14 @@ export async function getStudentData(): Promise<StudentProgress> {
 
   // Normalize today_completed flag based on last_attempt_date vs today (UTC day)
   const todayUtc = new Date().toISOString().split('T')[0]
-  let normalizedTodayCompleted = !!profile.today_completed
+  // Fix for string 'false' being converted to boolean true
+  let normalizedTodayCompleted = profile.today_completed === true || profile.today_completed === 'true'
   console.log('[getStudentData] Loaded profile:', profile)
+  console.log('[getStudentData] today_completed type:', typeof profile.today_completed, 'value:', profile.today_completed, 'normalized:', normalizedTodayCompleted)
   // Reset today_completed if it's a new day
-  if (profile.last_attempt_date !== todayUtc && normalizedTodayCompleted) {
+  // Normalize stored last_attempt_date to date-only for comparison
+  const profileLastDate = profile.last_attempt_date ? String(profile.last_attempt_date).split('T')[0] : null
+  if (profileLastDate !== todayUtc && normalizedTodayCompleted) {
     try {
       const updateRes = await updateProfile(userId, { today_completed: false })
       normalizedTodayCompleted = false
@@ -160,7 +164,7 @@ export async function getStudentData(): Promise<StudentProgress> {
     studentName: profile.name,
     totalPoints: effectiveTotalPoints,
     currentStreak: profile.current_streak,
-    lastAttemptDate: profile.last_attempt_date,
+  lastAttemptDate: profile.last_attempt_date ? String(profile.last_attempt_date).split('T')[0] : null,
     todayCompleted: normalizedTodayCompleted,
     lastQuizScore: profile.last_quiz_score,
     lastQuizPercentage: profile.last_quiz_percentage,
@@ -221,6 +225,7 @@ export async function getAllStudents(): Promise<StudentProgress[]> {
 export async function canTakeQuizToday(): Promise<boolean> {
   try {
     const data = await getStudentData()
+    // data.todayCompleted is already normalized in getStudentData
     return !data.todayCompleted
   } catch {
     return true

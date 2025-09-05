@@ -8,6 +8,7 @@ import type { StudentProgress } from "@/lib/student-storage"
 import LoginForm from "@/components/LoginForm"
 import { supabase } from "@/lib/supabaseClient"
 import { getProfile } from "@/lib/supabaseClient"
+import { getQuizTitle } from "@/lib/import-export"
 
 
 type UserRole = "student" | "teacher"
@@ -21,7 +22,7 @@ export default function HomePage() {
 
 
   useEffect(() => {
-    const init = async () => {
+  const init = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
@@ -71,6 +72,48 @@ export default function HomePage() {
     
     return () => {
       sub.subscription.unsubscribe()
+    }
+  }, [])
+
+  // Load quiz title from Supabase so all users see persisted title
+  useEffect(() => {
+    let mounted = true
+    const loadTitle = async () => {
+      try {
+        const title = await getQuizTitle()
+        if (mounted && title) setQuizTitle(title)
+      } catch (err) {
+        console.error('Failed to load quiz title from Supabase:', err)
+      }
+    }
+    loadTitle()
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  // Realtime subscription so title changes propagate to all connected users
+  useEffect(() => {
+    // subscribe to changes in quiz_meta
+    const channel = supabase
+      .channel('public:quiz_meta')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'quiz_meta' }, (payload) => {
+        try {
+          const newTitle = payload?.new?.quiz_title
+          if (newTitle) setQuizTitle(newTitle)
+        } catch (e) {
+          console.error('Error handling realtime quiz_meta payload', e)
+        }
+      })
+      .subscribe()
+
+    return () => {
+      // unsubscribe safely
+      try {
+        channel.unsubscribe()
+      } catch (e) {
+        // older supabase clients might use removeChannel/close - ignore errors
+      }
     }
   }, [])
 

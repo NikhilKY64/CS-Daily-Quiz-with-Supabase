@@ -39,6 +39,33 @@ export function DailyQuiz({ onComplete, onExit }: DailyQuizProps) {
 
   // Show Next on last question first, then Submit
   const handleLastNext = () => {
+    // Show feedback colors on current question before showing submit button
+    if (answers[currentQuestionIndex] !== -1 && feedbackIndex !== currentQuestionIndex) {
+      // Mark evaluation for the current question if not already evaluated
+      setEvaluation((prev) => {
+        const updated = [...prev]
+        if (updated[currentQuestionIndex] === "pending") {
+          updated[currentQuestionIndex] =
+            answers[currentQuestionIndex] === currentQuestion.correctAnswer ? "correct" : "wrong"
+        }
+        return updated
+      })
+
+      // Lock current question so answer can't be changed afterwards
+      setLockedAnswers((prev) => {
+        const copy = [...prev]
+        copy[currentQuestionIndex] = true
+        return copy
+      })
+
+      setFeedbackIndex(currentQuestionIndex);
+      setTimeout(() => {
+        setFeedbackIndex(null);
+        setShowLastNextButton(false);
+      }, 800);
+      return;
+    }
+    
     setShowLastNextButton(false);
   };
 
