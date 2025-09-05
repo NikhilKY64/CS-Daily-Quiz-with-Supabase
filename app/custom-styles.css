@@ -6,14 +6,17 @@ div {
 
 /* Card-like divs with hover effects */
 div.card-like {
-  background-color: var(--card, #ffffff) !important;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
-  border: 1px solid var(--border, #e5e7eb) !important;
-  padding: 1rem !important;
+  /* Polished card surface for stat cards */
+  background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(250,250,250,0.85));
+  box-shadow: 0 8px 24px rgba(2,6,23,0.06) !important;
+  border: 1px solid rgba(15,23,42,0.04) !important;
+  padding: 1.25rem !important;
+  border-radius: 14px !important;
 }
 
 div.card-like:hover {
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+  transform: translateY(-6px);
+  box-shadow: 0 18px 40px rgba(2,6,23,0.08) !important;
 }
 
 /* Enhanced paragraph styling */
@@ -33,25 +36,27 @@ p.highlight {
 
 /* Dark mode specific enhancements */
 .dark div {
-  background-color: #1a1a1a !important;
-  border-color: #333333 !important;
+  /* Neutral grey dark surfaces (less blue) */
+  background-color: #0b0b0b !important; /* near-black neutral */
+  border-color: #242424 !important; /* soft grey border */
 }
 
 .dark p {
-  color: #e5e5e5 !important;
+  color: #e6e6e6 !important; /* neutral off-white */
   font-weight: 500 !important;
-  letter-spacing: 0.025em !important;
+  letter-spacing: 0.02em !important;
 }
 
 /* Additional dark mode enhancements */
 .dark div.card-like {
-  background-color: #222222 !important;
-  box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.1) !important;
-  border-color: rgba(59, 130, 246, 0.1) !important;
+  /* Neutral card surface with softer grey tones */
+  background-color: #101214 !important;
+  box-shadow: 0 6px 18px -6px rgba(0,0,0,0.6) !important;
+  border-color: rgba(255,255,255,0.03) !important; /* very subtle border */
 }
 
 .dark div.card-like:hover {
-  box-shadow: 0 20px 25px -5px rgba(59, 130, 246, 0.2) !important;
+  box-shadow: 0 10px 22px -8px rgba(0,0,0,0.55) !important;
 }
 
 /* Add subtle hover effect to paragraphs */
@@ -106,6 +111,7 @@ p:hover {
   -webkit-tap-highlight-color: transparent;
 }
 
+
 .menu__icon span {
   position: absolute;
   left: 4px;
@@ -113,9 +119,13 @@ p:hover {
   height: 2px;
   border-radius: 2px;
   background-color: #ffffff;
-  box-shadow: 0 .5px 2px 0 rgba(0,0,0,0.12);
   transition: top 220ms ease, bottom 220ms ease, transform 220ms cubic-bezier(.2,.8,.2,1), opacity 180ms ease, background-color 180ms ease;
   transform-origin: center;
+}
+
+/* Ensure high contrast strokes for menu icon in dark theme */
+.dark .menu__icon span {
+  background-color: rgba(255,255,255,0.95);
 }
 
 /* initial stacked positions */
@@ -177,8 +187,8 @@ p:hover {
   width: 320px;
   height: 100vh;
   background: var(--card, #fff);
-  /* shadow casts to the right when menu is on the left */
-  box-shadow: 8px 0 24px rgba(0,0,0,0.12);
+  /* neutral shadow */
+  box-shadow: 8px 0 24px rgba(0,0,0,0.5);
   transition: left 300ms ease;
   z-index: 1000; /* ensure it's above other overlays */
 }
@@ -238,4 +248,29 @@ main {
   box-shadow: var(--card-elev);
 }
 
-/* decorative icons removed */
+/* Stat number and header polish */
+.card-like .card-header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.card-like .stat-number {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: hsl(145 60% 30%);
+}
+.card-like .stat-subtext {
+  color: #6b7280;
+  font-size: 0.8125rem;
+}
+
+/* Dark-mode aware overrides for card-like */
+.dark div.card-like {
+  background: linear-gradient(180deg, rgba(18,20,22,0.7), rgba(12,14,16,0.6)) !important;
+  border-color: rgba(255,255,255,0.03) !important;
+}
+
+/* Dark-mode main gradient to be softer */
+.dark main {
+  background: linear-gradient(180deg, rgba(2,6,23,0.56), rgba(2,6,23,0.46));
+}
