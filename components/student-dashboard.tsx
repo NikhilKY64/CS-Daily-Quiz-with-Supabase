@@ -180,7 +180,7 @@ export function StudentDashboard({ quizTitle, currentStudent }: StudentDashboard
     <div className="space-y-6">
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
+        <Card className="card-like">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Points</CardTitle>
             <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-emerald-50 text-emerald-600">
@@ -188,12 +188,12 @@ export function StudentDashboard({ quizTitle, currentStudent }: StudentDashboard
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary">{studentData.totalPoints}</div>
-            <p className="text-xs text-muted-foreground">Keep learning!</p>
+            <div className="stat-number">{studentData.totalPoints}</div>
+            <p className="stat-subtext">Keep learning!</p>
           </CardContent>
         </Card>
 
-        <Card>
+  <Card className="card-like">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Current Streak</CardTitle>
             <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-orange-50 text-orange-600">
@@ -201,12 +201,12 @@ export function StudentDashboard({ quizTitle, currentStudent }: StudentDashboard
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-700 dark:text-red-500">{studentData.currentStreak}</div>
-            <p className="text-xs text-muted-foreground">days in a row</p>
+            <div className="stat-number">{studentData.currentStreak}</div>
+            <p className="stat-subtext">days in a row</p>
           </CardContent>
         </Card>
 
-        <Card>
+  <Card className="card-like">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Last Attempt</CardTitle>
             <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-sky-50 text-sky-600">
@@ -214,16 +214,12 @@ export function StudentDashboard({ quizTitle, currentStudent }: StudentDashboard
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {studentData.lastAttemptDate ? new Date(studentData.lastAttemptDate).toLocaleDateString() : "Never"}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {studentData.todayCompleted ? "Completed today!" : "Ready to start"}
-            </p>
+            <div className="stat-number">{studentData.lastAttemptDate ? new Date(studentData.lastAttemptDate).toLocaleDateString() : "Never"}</div>
+            <p className="stat-subtext">{studentData.todayCompleted ? "Completed today!" : "Ready to start"}</p>
           </CardContent>
         </Card>
 
-        <Card>
+  <Card className="card-like">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Last Quiz Score</CardTitle>
             <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-yellow-50 text-amber-600">
@@ -231,12 +227,8 @@ export function StudentDashboard({ quizTitle, currentStudent }: StudentDashboard
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {studentData.lastQuizScore > 0 ? `${studentData.lastQuizScore}/5` : "No attempts"}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {studentData.lastQuizPercentage > 0 ? `${studentData.lastQuizPercentage}% correct` : "Take a quiz to see results"}
-            </p>
+            <div className="stat-number">{studentData.lastQuizScore > 0 ? `${studentData.lastQuizScore}/5` : "No attempts"}</div>
+            <p className="stat-subtext">{studentData.lastQuizPercentage > 0 ? `${studentData.lastQuizPercentage}% correct` : "Take a quiz to see results"}</p>
           </CardContent>
         </Card>
       </div>
