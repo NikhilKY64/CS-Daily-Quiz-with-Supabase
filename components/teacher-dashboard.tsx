@@ -184,7 +184,9 @@ export function TeacherDashboard({ quizTitle, onTitleChange }: TeacherDashboardP
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Questions</CardTitle>
-            <BookOpen className="h-4 w-4 text-muted-foreground" />
+            <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-emerald-50 text-emerald-600">
+              <BookOpen className="h-6 w-6" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-primary">{questionCount}</div>
@@ -195,7 +197,9 @@ export function TeacherDashboard({ quizTitle, onTitleChange }: TeacherDashboardP
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Students</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-sky-50 text-sky-600">
+              <Users className="h-6 w-6" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-accent">{studentCount}</div>
@@ -206,7 +210,9 @@ export function TeacherDashboard({ quizTitle, onTitleChange }: TeacherDashboardP
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Quiz Status</CardTitle>
-            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+            <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-amber-50 text-amber-600">
+              <BarChart3 className="h-6 w-6" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{questionCount >= 5 ? "Active" : "Setup"}</div>
