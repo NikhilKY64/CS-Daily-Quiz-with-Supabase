@@ -26,8 +26,11 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <main className="min-h-screen bg-background">
-            <div className="max-w-5xl mx-auto px-6 py-6">
-              {children}
+            {/* full-bleed layout: remove max-width and horizontal padding so app takes full width */}
+            <div className="app-container w-full pt-0 pb-6">
+              <div className="page-frame">
+                {children}
+              </div>
             </div>
           </main>
         </ThemeProvider>

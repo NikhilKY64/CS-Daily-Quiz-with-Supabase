@@ -223,11 +223,27 @@ export function AppHeader({
           </div>
 
           {userRole === "student" ? (
-            <Button variant="outline" size="sm" onClick={() => { setMenuOpen(false); setPasswordOpen(true); }}>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => {
+                setMenuOpen(false)
+                setPasswordOpen(true)
+              }}
+              style={{ backgroundColor: 'oklch(0.64 0.18 70)', color: '#fff', borderColor: 'transparent' }}
+            >
               Switch to Teacher
             </Button>
           ) : (
-            <Button variant="outline" size="sm" onClick={() => { setMenuOpen(false); onRoleChange("student"); }}>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => {
+                setMenuOpen(false)
+                onRoleChange("student")
+              }}
+              style={{ backgroundColor: 'oklch(0.50 0.16 225)', color: '#fff', borderColor: 'transparent' }}
+            >
               Switch to Student
             </Button>
           )}
@@ -262,9 +278,10 @@ export function AppHeader({
 
             <div>
               <Button
-                variant="outline"
+                variant="default"
                 size="sm"
                 className="w-full"
+                style={{ backgroundColor: 'oklch(0.47 0.17 149.92)', color: '#ffffff', borderColor: 'transparent' }}
                 onClick={() => {
                   setMenuOpen(false)
                   setIsEditProfileOpen(true)
