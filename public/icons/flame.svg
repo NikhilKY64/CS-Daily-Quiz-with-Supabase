@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Flat flame icon (no background) -->
+  <g fill="none" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M32 12c-3.5 7.5-11 12-11 21 0 10 7.5 16 11 16s11-6 11-16c0-9-7.5-13.5-11-21z" fill="#fb923c" stroke="#fb923c" stroke-width="0"/>
+    <path d="M29 24c0-4 4-6 4-10 0 4 3 6 3 10 0 6-4 10-4 10s-3-4-3-10z" fill="#fb6b04" stroke="#fb6b04" stroke-width="0"/>
+  </g>
+</svg>

@@ -202,3 +202,40 @@ p:hover {
 .slide-menu-backdrop.show {
   opacity: 1;
 }
+
+/* --- Redesign: layout tokens and utility tweaks --- */
+:root {
+  --ui-radius: 12px;
+  --ui-gap: 1rem;
+  --card-elev: 0 8px 20px rgba(2,6,23,0.08);
+}
+
+/* Make main container feel lighter and centered */
+main {
+  background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.35));
+}
+
+.app-header-redesign {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-gap);
+  padding: 1rem 0.5rem;
+  border-bottom: 1px solid rgba(15,23,42,0.06);
+}
+
+.app-header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.role-pill-centered {
+  min-width: 160px;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  box-shadow: var(--card-elev);
+}
+
+/* decorative icons removed */
