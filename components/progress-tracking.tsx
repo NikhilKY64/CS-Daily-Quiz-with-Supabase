@@ -183,7 +183,9 @@ export function ProgressTracking({ onBack }: ProgressTrackingProps) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Quizzes</CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
+            <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-sky-50 text-sky-600">
+              <Target className="h-6 w-6" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-primary">{totalQuizzes}</div>
@@ -194,7 +196,9 @@ export function ProgressTracking({ onBack }: ProgressTrackingProps) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Average Score</CardTitle>
-            <Award className="h-4 w-4 text-muted-foreground" />
+            <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-emerald-50 text-emerald-600">
+              <Award className="h-6 w-6" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-primary">{averageScore.toFixed(1)}/5</div>
@@ -216,7 +220,9 @@ export function ProgressTracking({ onBack }: ProgressTrackingProps) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Avg. Time</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-amber-50 text-amber-600">
+              <Clock className="h-6 w-6" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{averageTime.toFixed(1)}m</div>

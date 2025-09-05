@@ -183,7 +183,9 @@ export function StudentDashboard({ quizTitle, currentStudent }: StudentDashboard
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Points</CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
+            <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-emerald-50 text-emerald-600">
+              <Target className="h-6 w-6" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-primary">{studentData.totalPoints}</div>
@@ -194,7 +196,9 @@ export function StudentDashboard({ quizTitle, currentStudent }: StudentDashboard
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Current Streak</CardTitle>
-            <Flame className="h-4 w-4 text-muted-foreground" />
+            <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-orange-50 text-orange-600">
+              <Flame className="h-6 w-6" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-700 dark:text-red-500">{studentData.currentStreak}</div>
@@ -205,7 +209,9 @@ export function StudentDashboard({ quizTitle, currentStudent }: StudentDashboard
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Last Attempt</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-sky-50 text-sky-600">
+              <Calendar className="h-6 w-6" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -220,7 +226,9 @@ export function StudentDashboard({ quizTitle, currentStudent }: StudentDashboard
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Last Quiz Score</CardTitle>
-            <Trophy className="h-4 w-4 text-muted-foreground" />
+            <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-yellow-50 text-amber-600">
+              <Trophy className="h-6 w-6" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">

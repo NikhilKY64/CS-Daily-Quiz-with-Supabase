@@ -175,16 +175,7 @@ export function AppHeader({
             </div>
           </div>
         </div>
-        {/* Centered mode pill (absolutely centered over header row) */}
-        <div className="absolute inset-x-0 top-1/2 transform -translate-y-1/2 flex justify-center pointer-events-none">
-          <div
-            aria-live="polite"
-            role="status"
-            className={`pointer-events-auto min-w-[140px] text-center px-4 py-1 rounded-full text-sm font-medium border ${userRole === 'teacher' ? 'bg-amber-500 text-white border-amber-600' : 'bg-sky-500 text-white border-sky-600'}`}
-          >
-            {userRole === "teacher" ? "Teacher Mode" : "Student Mode"}
-          </div>
-        </div>
+  {/* Role indicators removed from header; role pill moved into slide-out menu */}
       </div>
       {/* Slide-out menu panel */}
       <div
@@ -217,13 +208,19 @@ export function AppHeader({
             <BookOpen className="h-6 w-6 text-primary" />
             <div>
               <div className="text-lg font-semibold">{quizTitle}</div>
-              <div className="text-sm text-muted-foreground">{userRole === "student" ? "Student Mode" : "Teacher Mode"}</div>
             </div>
           </div>
 
-          <Badge variant={userRole === "student" ? "default" : "secondary"}>
-            {userRole === "student" ? "Student Mode" : "Teacher Mode"}
-          </Badge>
+          {/* Centered role pill inside slide-out menu */}
+          <div className="flex justify-center">
+            <div
+              aria-live="polite"
+              role="status"
+              className={`min-w-[140px] text-center px-4 py-1 rounded-full text-sm font-medium border ${userRole === 'teacher' ? 'bg-amber-500 text-white border-amber-600' : 'bg-sky-500 text-white border-sky-600'}`}
+            >
+              {userRole === "teacher" ? "Teacher Mode" : "Student Mode"}
+            </div>
+          </div>
 
           {userRole === "student" ? (
             <Button variant="outline" size="sm" onClick={() => { setMenuOpen(false); setPasswordOpen(true); }}>

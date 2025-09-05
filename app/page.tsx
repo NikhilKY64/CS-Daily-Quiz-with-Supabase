@@ -99,7 +99,7 @@ export default function HomePage() {
       .channel('public:quiz_meta')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'quiz_meta' }, (payload) => {
         try {
-          const newTitle = payload?.new?.quiz_title
+          const newTitle = (payload?.new as { quiz_title?: string })?.quiz_title
           if (newTitle) setQuizTitle(newTitle)
         } catch (e) {
           console.error('Error handling realtime quiz_meta payload', e)
