@@ -85,7 +85,7 @@
   /* Updated color tokens for educational quiz app design */
   --background: oklch(1 0 0);
   --foreground: oklch(0.205 0 0);
-  --card: oklch(0.82 0.05 288.88);
+  --card: oklch(89.723% 0.03278 289.5 / 0.986);
   --card-foreground: oklch(0% 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(52.249% 0.17696 25.81);
@@ -99,7 +99,7 @@
   --accent-foreground: oklch(1 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0.922 0 0);
+  --border: oklch(40.359% 0.00266 16.319);
   --input: oklch(0.97 0 0);
   --ring: oklch(0.646 0.222 264.376);
   --chart-1: oklch(0.488 0.243 264.376);
