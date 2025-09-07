@@ -11,14 +11,11 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog"
-import { supabase } from "@/lib/supabaseClient"
+import { supabase, updatePendingName } from "@/lib/supabaseClient"
 
 async function updateProfile(userId: string, updates: { name: string }) {
-  const { error } = await supabase
-    .from('profiles')
-    .update(updates)
-    .eq('id', userId)
-  if (error) throw error
+  // Save as pending_name so it doesn't appear until approved
+  return updatePendingName(userId, updates.name)
 }
 
 interface UserProfileEditProps {
@@ -40,6 +37,7 @@ export function UserProfileEdit({
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<boolean>(false)
+  const [pendingMessage, setPendingMessage] = useState<string | null>(null)
 
   useEffect(() => {
     if (isOpen) {
@@ -66,8 +64,10 @@ export function UserProfileEdit({
       }
 
       await updateProfile(data.user.id, { name })
-      onNameUpdate(name)
+      // Do not update the visible name here; the pending change requires approval.
+
       setSuccess(true)
+      setPendingMessage('Your new name has been sent for approval. It will be visible after a teacher approves it.')
 
       setTimeout(() => {
         onOpenChange(false)
@@ -81,23 +81,25 @@ export function UserProfileEdit({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      {/* Increase max width so input can be longer like before */}
+      <DialogContent className="sm:max-w-[640px]">
         <DialogHeader>
           <DialogTitle>Edit Profile</DialogTitle>
           <DialogDescription>
-            Update your display name. This will be visible to other users.
+            Request a change to your display name — the new name will be shown after a teacher or admin approves it.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <label htmlFor="name" className="text-right text-sm font-medium">
+          {/* Responsive layout: stack label above input on small screens, align in 4 cols on sm+ */}
+          <div className="grid gap-2 sm:grid-cols-4 sm:items-center sm:gap-4">
+            <label htmlFor="name" className="text-sm font-medium sm:text-right">
               Name
             </label>
             <Input
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="col-span-3"
+              className="sm:col-span-3 w-full"
               placeholder="Enter your name"
               disabled={isLoading || success}
             />
@@ -109,7 +111,12 @@ export function UserProfileEdit({
           )}
           {success && (
             <div className="text-sm text-green-500 col-span-4 text-center">
-              Profile updated successfully!
+              Profile update request submitted.
+            </div>
+          )}
+          {pendingMessage && (
+            <div className="text-sm text-blue-600 col-span-4 text-center">
+              {pendingMessage}
             </div>
           )}
         </div>

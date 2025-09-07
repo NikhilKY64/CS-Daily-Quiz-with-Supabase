@@ -3,12 +3,97 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Scoped login-page theme: apply these variables only when the login container
+   has the `login-theme` class. This keeps the rest of the app on the default
+   token set while the login page shows the educational oklch theme. */
+.login-theme {
+  /* Updated color tokens for educational quiz app design */
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.205 0 0);
+  --card: oklch(0.84 0.05 279.35);
+  --card-foreground: oklch(0% 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0% 0 0);
+  --primary: oklch(0.46 0.12 245.98);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.556 0 0);
+  --secondary-foreground: oklch(1 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(77.42% 0.00802 207.698 / 0.63);
+  --accent-foreground: oklch(1 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(8.467% 0.00001 271.152 / 0.201);
+  --input: oklch(0.97 0 0);
+  --ring: oklch(0.646 0.222 264.376);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.828 0.189 84.429);
+  --chart-3: oklch(0.577 0.245 27.325);
+  --chart-4: oklch(0.6 0.118 184.704);
+  --chart-5: oklch(0.398 0.07 227.392);
+  --radius: 0.5rem;
+  --sidebar: oklch(0.97 0 0);
+  --sidebar-foreground: oklch(0.269 0 0);
+  --sidebar-primary: oklch(0.646 0.222 264.376);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(42.912% 0.08943 18.639);
+  --sidebar-accent-foreground: oklch(1 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.646 0.222 264.376);
+}
+
+.dark .login-theme {
+  /* Dark-mode overrides for the login-theme scope */
+  --background: oklch(31.522% 0.00284 16.614);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.65 0.3 28.96 / 0);
+  --card-foreground: oklch(0.64 0.19 240.65);
+  --popover: oklch(0.145 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.5 0.28 263.24 / 0.94);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.61 0.01 0);
+  --accent: oklch(0.82 0.17 204.87 / 0.63);
+  --accent-foreground: oklch(1 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.269 0 0);
+  --input: #3b63f600;
+  --ring: oklch(0.646 0.222 264.376);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.577 0.245 27.325);
+  --sidebar-accent-foreground: oklch(1 0 0);
+  --sidebar-border: oklch(0.269 0 0);
+  --sidebar-ring: oklch(0.646 0.222 264.376);
+}
+
+/* Preserve the same educational oklch tokens globally so they are available
+   outside the login scope as well. This keeps the existing login-scoped
+   variables while ensuring :root and .dark have the same values. */
 :root {
   /* Updated color tokens for educational quiz app design */
   --background: oklch(1 0 0);
   --foreground: oklch(0.205 0 0);
-  --card: oklch(0.83 0.01 281.84 / 0.26);
-  --card-foreground: oklch(0.49 0.23 267.87);
+  /* Animate --card through four oklch colors smoothly. Use a linear timing function
+    and make the last keyframe equal to the first so the animation loops seamlessly
+    (like a looping video). Keep the duration a bit longer for a relaxed, smooth
+    transition and hint the browser that --card will change. */
+  --card: oklch(0.82 0.05 288.88);
+  will-change: --card;
+  animation: cardColorShift 6s linear infinite;
+  --card-foreground: oklch(0% 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(52.249% 0.17696 25.81);
   --primary: oklch(0.46 0.12 245.98);
@@ -38,6 +123,24 @@
   --sidebar-accent-foreground: oklch(1 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.646 0.222 264.376);
+}
+
+/* Keyframes to interpolate the --card property between two oklch colors.
+   Note: color interpolation of custom properties is supported in modern browsers;
+   include a reduced-motion fallback. */
+@keyframes cardColorShift {
+  /* Four evenly spaced color stops. 100% repeats the 0% color so the loop is seamless.
+     Using linear timing keeps motion constant (video-like). Browsers that don't
+     support interpolating custom color properties will simply skip smooth blending. */
+  0%   { --card: oklch(0.82 0.05 288.88); }
+  25%  { --card: oklch(0.88 0.06 145.63); }
+  50%  { --card: oklch(0.9  0.05 107.57); }
+  75%  { --card: oklch(0.84 0.05 279.35); }
+  100% { --card: oklch(0.82 0.05 288.88); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { animation: none !important; }
 }
 
 .dark {
@@ -185,6 +288,10 @@
   * {
     @apply border-border outline-ring/50;
   }
+  
+    /* User requested global border color - expose as CSS variable instead */
+  /* Removed redundant :root block to prevent CSS variable conflicts */
+  
   body {
     @apply bg-background text-foreground;
   }
@@ -232,4 +339,83 @@
   p:hover {
     @apply text-foreground;
   }
+  /* Native range/slider styling (cross-browser)
+     - default visible track + filled progress in blue (#3b82f6)
+     - subtle thumb with focus/hover ring for accessibility */
+  input[type="range"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    width: 100%;
+    background: transparent;
+    height: 24px; /* give some vertical space for the thumb */
+  }
+
+  /* WebKit/Blink track */
+  input[type="range"]::-webkit-slider-runnable-track {
+    height: 6px;
+    background: #e6f0ff; /* light blue background for unfilled track */
+    border-radius: 999px;
+  }
+
+  /* WebKit/Blink thumb */
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    margin-top: -5px; /* center the thumb on the track */
+    background: #3b82f6; /* blue */
+    border-radius: 50%;
+    border: none;
+    box-shadow: 0 0 0 6px rgba(59,130,246,0.12);
+    cursor: pointer;
+  }
+
+  /* Firefox track/progress/thumb */
+  input[type="range"]::-moz-range-track {
+    height: 6px;
+    background: #e6f0ff;
+    border-radius: 999px;
+  }
+  input[type="range"]::-moz-range-progress {
+    height: 6px;
+    background: #3b82f6;
+    border-radius: 999px;
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: #3b82f6;
+    border-radius: 50%;
+    border: none;
+    box-shadow: 0 0 0 6px rgba(59,130,246,0.12);
+    cursor: pointer;
+  }
+
+  /* Microsoft/Edge legacy rules */
+  input[type="range"]::-ms-track {
+    height: 6px;
+    background: transparent;
+    border-color: transparent;
+    color: transparent; /* hide native ticks */
+  }
+  input[type="range"]::-ms-fill-lower {
+    background: #3b82f6;
+    border-radius: 999px;
+  }
+  input[type="range"]::-ms-fill-upper {
+    background: #e6f0ff;
+    border-radius: 999px;
+  }
+  input[type="range"]::-ms-thumb {
+    width: 16px;
+    height: 16px;
+    background: #3b82f6;
+    border-radius: 50%;
+    border: none;
+    box-shadow: 0 0 0 6px rgba(59,130,246,0.12);
+    cursor: pointer;
+  }
+
 }

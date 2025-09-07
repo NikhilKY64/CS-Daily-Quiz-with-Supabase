@@ -115,6 +115,22 @@ export default function LoginForm({ onLogin }: { onLogin?: (user: any) => void }
     }
   }, [])
 
+  // Persist remembered email immediately when rememberMe or email changes.
+  // This ensures the checkbox behavior is reliable even before login.
+  useEffect(() => {
+    try {
+      if (rememberMe) {
+        if (email) {
+          localStorage.setItem('rememberedEmail', email)
+        }
+      } else {
+        localStorage.removeItem('rememberedEmail')
+      }
+    } catch (_) {
+      // ignore storage errors (e.g., private mode)
+    }
+  }, [rememberMe, email])
+
   // Prefill support email when opening support dialog
   useEffect(() => {
     const prefill = async () => {
@@ -304,18 +320,19 @@ export default function LoginForm({ onLogin }: { onLogin?: (user: any) => void }
         </div>
         {!isSignUp && (
           <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="remember" 
-              checked={rememberMe}
-              onCheckedChange={(checked) => setRememberMe(checked === true)}
-            />
-            <Label 
-              htmlFor="remember"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
-              Remember me
-            </Label>
-          </div>
+              <Checkbox 
+                id="remember" 
+                checked={rememberMe}
+                onCheckedChange={(checked) => setRememberMe(checked === true)}
+                className="border-2 border-primary rounded-sm"
+              />
+              <Label 
+                htmlFor="remember"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Remember me
+              </Label>
+            </div>
         )}
         <Button 
           className="w-full" 

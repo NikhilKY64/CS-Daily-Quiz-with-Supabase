@@ -139,7 +139,7 @@ export function importQuestions(file: File, replaceExisting = false): Promise<Im
         } catch (parseError) {
           resolve({
             success: false,
-            message: "Invalid JSON. The file should have the same format as in the sample file",
+            message: "Invalid JSON. The file should have the same format as in the sample file.\nFor solution click on solution button.",
             solution: `How to fix your file:\n1. Download the sample question file from the import dialog.\n2. Open both your file and the sample in a text editor.\n3. Copy the sample and your file content, then paste both into an AI tool like ChatGPT.\n4. Ask the AI to reformat your questions to match the sample structure and make the result downloadable as a JSON file.\n5. Download the corrected file and try importing again.`,
           })
           return
@@ -155,7 +155,7 @@ export function importQuestions(file: File, replaceExisting = false): Promise<Im
         } else {
           resolve({
             success: false,
-            message: "Invalid JSON. The file should have the same format as in the sample file",
+            message: "Invalid JSON. The file should have the same format as in the sample file.\nFor solution click on solution buttion.",
             solution: `How to fix your file:\n1. Download the sample question file from the import dialog.\n2. Open both your file and the sample in a text editor.\n3. Copy the sample and your file content, then paste both into an AI tool like ChatGPT.\n4. Ask the AI to reformat your questions to match the sample structure and make the result downloadable as a JSON file.\n5. Download the corrected file and try importing again.`,
           })
           return
@@ -176,7 +176,7 @@ export function importQuestions(file: File, replaceExisting = false): Promise<Im
         if (validQuestions.length === 0) {
           resolve({
             success: false,
-            message: "Invalid JSON. The file should have the same format as in the sample file",
+            message: "Invalid JSON. The file should have the same format as in the sample file.\nFor solution click on solution buttion.",
             errors,
             solution: `How to fix your file:\n1. Download the sample question file from the import dialog.\n2. Open both your file and the sample in a text editor.\n3. Copy the sample and your file content, then paste both into an AI tool like ChatGPT.\n4. Ask the AI to reformat your questions to match the sample structure and make the result downloadable as a JSON file.\n5. Download the corrected file and try importing again.`,
           })

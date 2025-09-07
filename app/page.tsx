@@ -119,7 +119,7 @@ export default function HomePage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-background text-foreground">
+      <div className="min-h-screen bg-background text-foreground login-theme">
         <main className="container mx-auto px-4 py-8">
           <LoginForm onLogin={(u) => setUser(u)} />
 

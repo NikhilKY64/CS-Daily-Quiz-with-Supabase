@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
+import dynamic from 'next/dynamic'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -38,6 +39,16 @@ export function TeacherDashboard({ quizTitle, onTitleChange }: TeacherDashboardP
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null)
   const [showImportExport, setShowImportExport] = useState(false)
   const [importExportMode, setImportExportMode] = useState<"import" | "export">("import")
+  const [showAdminPanel, setShowAdminPanel] = useState(false)
+
+  // Dynamic client-only Admin panel
+  const AdminPanel = dynamic(() => import('./admin-panel'), { ssr: false })
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false)
+  const [passwordInput, setPasswordInput] = useState("")
+  const [passwordError, setPasswordError] = useState<string | null>(null)
+  const [isVerifyingPassword, setIsVerifyingPassword] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
+  
 
   const loadData = async () => {
     try {
@@ -47,6 +58,16 @@ export function TeacherDashboard({ quizTitle, onTitleChange }: TeacherDashboardP
       const { getAllProfiles } = await import('@/lib/supabaseClient.js')
       const students = await getAllProfiles()
       setStudentCount(students ? students.length : 0)
+      try {
+        const { getCurrentUser, getProfile } = await import('@/lib/supabaseClient.js')
+        const authResp = await getCurrentUser()
+        if (authResp && authResp.id) {
+          const profile = await getProfile(authResp.id)
+          setIsAdmin(!!(profile && profile.is_admin))
+        }
+      } catch (e) {
+        console.error('Failed to determine admin flag:', e)
+      }
     } catch (error) {
       console.error('Error loading dashboard data:', error)
       // Show a more user-friendly error message
@@ -145,6 +166,9 @@ export function TeacherDashboard({ quizTitle, onTitleChange }: TeacherDashboardP
         <div>
           <h2 className="text-3xl font-bold text-foreground">Teacher Dashboard</h2>
           <p className="text-muted-foreground">Manage your quiz and track student progress</p>
+          <div className="mt-3 rounded-md border border-red-300 bg-red-50 p-3 dark:border-red-700 dark:bg-red-900/30">
+            <p className="text-sm text-red-800 font-bold dark:text-red-200">Warning: Any changes you make here — like adding or editing questions — will affect all users. Please proceed carefully</p>
+          </div>
         </div>
 
         <Dialog open={isEditingTitle} onOpenChange={setIsEditingTitle}>
@@ -178,6 +202,11 @@ export function TeacherDashboard({ quizTitle, onTitleChange }: TeacherDashboardP
             </div>
           </DialogContent>
         </Dialog>
+        <div className="ml-3">
+          <Button variant="ghost" size="sm" onClick={() => setShowAdminPanel(true)}>
+            Manage Admins
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -265,7 +294,11 @@ export function TeacherDashboard({ quizTitle, onTitleChange }: TeacherDashboardP
                 <Button
                   variant="outline"
                   className="w-full bg-transparent"
-                  onClick={() => setShowQuestionPreview(true)}
+                  onClick={() => {
+                    setPasswordInput("")
+                    setPasswordError(null)
+                    setShowPasswordDialog(true)
+                  }}
                 >
                   Browse Questions
                 </Button>
@@ -333,6 +366,86 @@ export function TeacherDashboard({ quizTitle, onTitleChange }: TeacherDashboardP
         mode={importExportMode}
         onImportComplete={handleImportComplete}
       />
+
+      {/* Admin management dialog */}
+      {showAdminPanel && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="bg-overlay fixed inset-0" onClick={() => setShowAdminPanel(false)} />
+          <div className="relative w-full max-w-3xl p-6">
+            <div className="bg-background rounded-lg p-4 shadow-lg">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium">Manage Admins</h3>
+                <Button variant="ghost" onClick={() => setShowAdminPanel(false)}>Close</Button>
+              </div>
+              <div>
+                {/* Render client-only AdminPanel component */}
+                <AdminPanel />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Password dialog used for gating Browse Questions */}
+      <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Enter Teacher Password</DialogTitle>
+            <DialogDescription>Provide the teacher password to access the question browser.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="teacher-password">Password</Label>
+              <Input
+                id="teacher-password"
+                type="password"
+                value={passwordInput}
+                onChange={(e) => setPasswordInput(e.target.value)}
+              />
+              {passwordError && <p className="text-sm text-destructive mt-2">{passwordError}</p>}
+            </div>
+
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowPasswordDialog(false)
+                  setPasswordInput("")
+                  setPasswordError(null)
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={async () => {
+                  setIsVerifyingPassword(true)
+                  setPasswordError(null)
+                  try {
+                    const { getTeacherPassword } = await import('@/lib/supabaseClient.js')
+                    const stored = await getTeacherPassword()
+                    if (passwordInput === stored) {
+                      setShowPasswordDialog(false)
+                      setShowQuestionPreview(true)
+                    } else {
+                      setPasswordError('Incorrect password')
+                    }
+                  } catch (err) {
+                    console.error('Error verifying teacher password', err)
+                    setPasswordError('Verification failed. Please try again.')
+                  } finally {
+                    setIsVerifyingPassword(false)
+                  }
+                }}
+                disabled={isVerifyingPassword}
+              >
+                {isVerifyingPassword ? 'Verifying...' : 'Verify'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      
     </div>
   )
 }

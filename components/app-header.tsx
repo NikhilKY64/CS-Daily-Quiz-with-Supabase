@@ -5,13 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { BookOpen, User, ArrowLeft, X, Moon } from "lucide-react"
 import { useTheme } from "next-themes"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog"
+import { DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { ThemeToggle } from "@/components/theme-toggle"
 import type { StudentProgress } from "@/lib/student-storage"
@@ -43,10 +37,7 @@ export function AppHeader({
   onNameUpdate,
 }: AppHeaderProps) {
   const router = useRouter()
-  const [passwordOpen, setPasswordOpen] = useState(false)
-  const [password, setPassword] = useState("")
-  const [checking, setChecking] = useState(false)
-  const [error, setError] = useState("")
+  
   const [rank, setRank] = useState<number | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false)
@@ -89,24 +80,7 @@ export function AppHeader({
     }
   }
 
-  const verifyPassword = async () => {
-    setChecking(true)
-    setError("")
-    try {
-      const { getTeacherPassword } = await import("@/lib/supabaseClient")
-      const stored = await getTeacherPassword()
-      if (password && stored && password === stored) {
-        onRoleChange("teacher")
-        setPasswordOpen(false)
-      } else {
-        setError("Invalid password")
-      }
-    } catch (e: any) {
-      setError(e.message || "Failed to verify password")
-    } finally {
-      setChecking(false)
-    }
-  }
+  
 
   return (
     <header className="border-b bg-card">
@@ -228,7 +202,7 @@ export function AppHeader({
               size="sm"
               onClick={() => {
                 setMenuOpen(false)
-                setPasswordOpen(true)
+                onRoleChange("teacher")
               }}
               style={{ backgroundColor: 'oklch(0.64 0.18 70)', color: '#fff', borderColor: 'transparent' }}
             >
@@ -300,31 +274,7 @@ export function AppHeader({
           </div>
         </div>
       </div>
-      {/* Teacher password dialog */}
-      <Dialog open={passwordOpen} onOpenChange={setPasswordOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Enter Teacher Password</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-2">
-            <Input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-            {error && <p className="text-sm text-destructive">{error}</p>}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setPasswordOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={verifyPassword} disabled={checking}>
-              {checking ? "Checking..." : "Continue"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      
 
       
 
