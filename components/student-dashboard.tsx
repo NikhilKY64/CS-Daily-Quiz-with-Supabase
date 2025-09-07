@@ -169,7 +169,7 @@ export function StudentDashboard({ quizTitle, currentStudent }: StudentDashboard
       <div className="space-y-6">
         <div className="text-center space-y-2">
           <h2 className="text-3xl font-bold text-foreground">Daily Quiz</h2>
-          <p className="text-muted-foreground">Answer all questions to complete today's challenge</p>
+          <p className="text-muted-foreground">Answer all questions to complete today&apos;s challenge</p>
         </div>
         <DailyQuiz onComplete={handleQuizComplete} onExit={handleQuizExit} />
       </div>
@@ -238,7 +238,7 @@ export function StudentDashboard({ quizTitle, currentStudent }: StudentDashboard
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Play className="h-5 w-5 text-primary" />
-            Today's Quiz
+            Today&apos;s Quiz
           </CardTitle>
           <CardDescription>Answer 5 random questions to earn points and maintain your streak</CardDescription>
         </CardHeader>

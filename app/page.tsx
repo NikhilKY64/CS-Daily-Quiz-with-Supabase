@@ -157,7 +157,7 @@ export default function HomePage() {
           <div className="space-y-6">
             <div className="text-center space-y-2">
               <h2 className="text-3xl font-bold text-foreground">{greeting}</h2>
-              <p className="text-muted-foreground">Ready for today's challenge?</p>
+              <p className="text-muted-foreground">Ready for today&apos;s challenge?</p>
             </div>
             <StudentDashboard quizTitle={quizTitle} />
           </div>

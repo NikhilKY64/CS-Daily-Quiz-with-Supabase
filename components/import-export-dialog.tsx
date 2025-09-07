@@ -372,10 +372,10 @@ export function ImportExportDialog({ isOpen, onClose, mode, onImportComplete }: 
                 <div className="mt-3 rounded-md border bg-muted/20 p-3 text-sm">
                   <p className="font-medium mb-2">How to fix :- </p>
                   <ol className="list-decimal list-inside space-y-1">
-                    <li>Download the sample file using "Download Sample".</li>
-                    <li>Give your json file and the sample file to AI (likeChatGPT).</li>
-                    <li>Tell AI to Reformat your file to match format of sample file.</li>
-                    <li>Ask to make it downloadable.</li>
+                    <li>Download the sample file using the Download Sample button.</li>
+                    <li>Provide your JSON file and the sample file to an AI tool (for example ChatGPT).</li>
+                    <li>Ask the AI to reformat your file to match the structure of the sample file.</li>
+                    <li>Make the corrected file downloadable.</li>
                     <li>Import the corrected file.</li>
                   </ol>
                 </div>

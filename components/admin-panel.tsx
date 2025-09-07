@@ -118,7 +118,7 @@ export default function AdminPanel(): JSX.Element {
                   <div className="font-medium">{p.name || p.id}</div>
                   <div className="text-sm text-muted-foreground">{p.email || ''}</div>
                   {p.pending_name ? (
-                    <div className="text-sm text-foreground">Pending: "{p.pending_name}"</div>
+                    <div className="text-sm text-foreground">Pending: &quot;{p.pending_name}&quot;</div>
                   ) : null}
                 </div>
                 <div className="flex items-center gap-2">

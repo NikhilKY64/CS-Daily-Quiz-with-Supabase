@@ -168,7 +168,7 @@ export default function QuestionUploadTestPage() {
               ) : (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground mb-4">
-                    Click "Add Test Question" to create a new question and test the upload process.
+                    Click the Add Test Question button to create a new question and test the upload process.
                   </p>
                   <Button onClick={() => setShowForm(true)}>
                     Start Upload Test
@@ -195,7 +195,7 @@ export default function QuestionUploadTestPage() {
             <div>
               <h4 className="font-semibold text-sm mb-2">1. Create a Question</h4>
               <p className="text-sm text-muted-foreground">
-                Click "Add Test Question" and fill out the form with sample data.
+                Click the Add Test Question button and fill out the form with sample data.
               </p>
             </div>
             <div>
@@ -207,13 +207,13 @@ export default function QuestionUploadTestPage() {
             <div>
               <h4 className="font-semibold text-sm mb-2">3. Verify in Database</h4>
               <p className="text-sm text-muted-foreground">
-                Check the "Recent Questions" section to see your uploaded question.
+                Check the Recent Questions section to see your uploaded question.
               </p>
             </div>
             <div>
               <h4 className="font-semibold text-sm mb-2">4. Test Verification</h4>
               <p className="text-sm text-muted-foreground">
-                Use the "Verify" button to confirm the question exists in Supabase.
+                Use the Verify button to confirm the question exists in Supabase.
               </p>
             </div>
           </div>

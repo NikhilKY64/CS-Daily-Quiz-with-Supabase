@@ -9,8 +9,9 @@ import { Badge } from "@/components/ui/badge"
 import { Clock, ChevronLeft, ChevronRight, CheckCircle, XCircle, Trophy } from "lucide-react"
 import type { Question } from "@/lib/types"
 import type { QuizResult, QuizQuestionResult } from "@/lib/student-storage"
-import { getRandomQuestions } from "@/lib/question-storage"
+import { getRandomQuestions, getRandomQuestionsForUser, getOrCreateDailyQuiz } from "@/lib/question-storage"
 import { completeQuiz } from "@/lib/student-storage"
+import { getCurrentUser, recordAskedQuestions, getQuizAttempts } from "@/lib/supabaseClient.js"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 
 interface DailyQuizProps {
@@ -18,7 +19,7 @@ interface DailyQuizProps {
   onExit: () => void
 }
 
-type QuizState = "loading" | "quiz" | "results"
+type QuizState = "loading" | "quiz" | "results" | "disabled"
 
 export function DailyQuiz({ onComplete, onExit }: DailyQuizProps) {
   const [state, setState] = useState<QuizState>("loading")
@@ -80,8 +81,30 @@ export function DailyQuiz({ onComplete, onExit }: DailyQuizProps) {
   useEffect(() => {
     const loadQuestions = async () => {
       try {
-        // Load random questions
-        const randomQuestions = await getRandomQuestions(5)
+  // Load the canonical daily quiz for today's date so all students see the same questions
+  const today = new Date().toISOString().slice(0, 10) // YYYY-MM-DD
+
+  // Check if current user already attempted today's quiz and disable if so
+  try {
+    const user = await getCurrentUser()
+    const userId = user?.id || null
+    if (userId) {
+      const attempts = await getQuizAttempts(userId)
+      const attemptedToday = (attempts || []).some((a: any) => {
+        const attemptDate = a.date ? String(a.date).split('T')[0] : (a.created_at ? String(a.created_at).split('T')[0] : null)
+        return attemptDate === today
+      })
+      if (attemptedToday) {
+        setState('disabled')
+        return
+      }
+    }
+  } catch (e) {
+    // ignore errors checking attempts; continue to load quiz so user can take it
+    console.warn('Failed to check quiz attempts:', e)
+  }
+
+  let randomQuestions = await getOrCreateDailyQuiz(today, 5)
         if (randomQuestions.length < 5) {
           // Not enough questions
           setState("results")
@@ -218,6 +241,17 @@ export function DailyQuiz({ onComplete, onExit }: DailyQuizProps) {
       setIsSubmitting(true);
       try {
         await completeQuiz(quizResult);
+        // Record asked question ids for this user so they won't be asked again
+        try {
+          const user = await getCurrentUser()
+          const userId = user?.id || null
+          if (userId) {
+            const qids = quizResult.questions.map(q => q.questionId)
+            await recordAskedQuestions(userId, qids)
+          }
+        } catch (e) {
+          console.warn('Failed to record asked questions:', e)
+        }
         onComplete(quizResult);
       } catch (error) {
         console.error('Error completing quiz:', error);
@@ -258,6 +292,22 @@ export function DailyQuiz({ onComplete, onExit }: DailyQuizProps) {
       <Card className="w-full max-w-2xl mx-auto">
         <CardContent className="py-8 text-center">
           <p className="text-muted-foreground">Loading your daily quiz...</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (state === 'disabled') {
+    return (
+      <Card className="w-full max-w-2xl mx-auto">
+        <CardHeader>
+          <CardTitle className="text-center">Daily Quiz Locked</CardTitle>
+        </CardHeader>
+        <CardContent className="text-center space-y-4">
+          <p className="text-muted-foreground">
+            You've already taken today's quiz. The next quiz will be available at midnight UTC.
+          </p>
+          <Button onClick={onExit}>Back to Dashboard</Button>
         </CardContent>
       </Card>
     )
@@ -508,8 +558,8 @@ export function DailyQuiz({ onComplete, onExit }: DailyQuizProps) {
           <DialogHeader>
             <DialogTitle>Submit Quiz</DialogTitle>
           </DialogHeader>
-          <div className="text-sm text-muted-foreground">
-            Are you sure you want to submit? You won't be able to change answers afterwards.
+            <div className="text-sm text-muted-foreground">
+            Are you sure you want to submit? You will not be able to change answers afterwards.
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowSubmitConfirm(false)}>Resume</Button>

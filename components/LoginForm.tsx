@@ -144,7 +144,7 @@ export default function LoginForm({ onLogin }: { onLogin?: (user: any) => void }
       }
     }
     prefill()
-  }, [supportOpen])
+  }, [supportOpen, email])
 
   const submitSupportRequest = async () => {
     if (!supportEmail || !supportMessage.trim()) {
@@ -367,7 +367,7 @@ export default function LoginForm({ onLogin }: { onLogin?: (user: any) => void }
             </>
           ) : (
             <>
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <a 
                 href="#" 
                 className="text-primary hover:underline"

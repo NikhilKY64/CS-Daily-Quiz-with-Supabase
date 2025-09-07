@@ -1,4 +1,4 @@
-import { supabase, getQuizQuestions, createQuizQuestion, updateQuizQuestion, deleteQuizQuestion } from './supabaseClient'
+import { supabase, getQuizQuestions, createQuizQuestion, updateQuizQuestion, deleteQuizQuestion, getAskedQuestionIdsForUser } from './supabaseClient'
 import { Question, QuestionBank } from './types'
 
 // Get all questions from Supabase
@@ -218,6 +218,96 @@ export async function getRandomQuestions(count: number, category?: string, diffi
   } catch (error) {
     console.error('Error getting random questions:', error)
     throw error // Throw error instead of returning empty array
+  }
+}
+
+// Get random questions for a user, excluding questions they've already seen
+export async function getRandomQuestionsForUser(userId: string | null, count: number, category?: string, difficulty?: string): Promise<Question[]> {
+  try {
+    const questionBank = await getQuestionBank()
+    let questions = Object.values(questionBank)
+
+    // Exclude already asked questions if userId provided
+    if (userId) {
+      try {
+        const askedIds = await getAskedQuestionIdsForUser(userId)
+        if (askedIds && askedIds.length > 0) {
+          questions = questions.filter(q => !askedIds.includes(q.id))
+        }
+      } catch (e) {
+        console.error('Error fetching asked ids for user in getRandomQuestionsForUser:', e)
+      }
+    }
+
+    // Filter by category if specified
+    if (category && category !== 'All') {
+      questions = questions.filter(q => q.category === category)
+    }
+
+    // Filter by difficulty if specified
+    if (difficulty && difficulty !== 'All') {
+      questions = questions.filter(q => q.difficulty === difficulty)
+    }
+
+    // Fisher-Yates shuffle
+    for (let i = questions.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [questions[i], questions[j]] = [questions[j], questions[i]];
+    }
+
+    return questions.slice(0, count)
+  } catch (error) {
+    console.error('Error getting random questions for user:', error)
+    throw error
+  }
+}
+
+// Get or create a canonical daily quiz for a given date. This returns the
+// same set of questions for all students for that date.
+export async function getOrCreateDailyQuiz(quizDate: string, count: number, category?: string, difficulty?: string): Promise<Question[]> {
+  try {
+    // Try to load existing daily quiz
+    const resp = await supabase.from('daily_quizzes').select('question_ids').eq('quiz_date', quizDate).single()
+    if (resp && resp.data && resp.data.question_ids) {
+      const ids: string[] = resp.data.question_ids
+      const questionBank = await getQuestionBank()
+      const questions = ids.map(id => (questionBank as any)[id]).filter(Boolean)
+      return questions
+    }
+
+    // Create a new daily quiz for the date
+    const questionBank = await getQuestionBank()
+    let questions = Object.values(questionBank)
+
+    // Filter by category/difficulty if specified
+    if (category && category !== 'All') questions = questions.filter(q => q.category === category)
+    if (difficulty && difficulty !== 'All') questions = questions.filter(q => q.difficulty === difficulty)
+
+    // Shuffle
+    for (let i = questions.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [questions[i], questions[j]] = [questions[j], questions[i]];
+    }
+
+    const selected = questions.slice(0, count)
+    const ids = selected.map(q => q.id)
+
+    // Persist daily quiz (capture response and log errors so failures aren't silent)
+    const { data: insertData, error: insertError } = await supabase
+      .from('daily_quizzes')
+      .insert({ quiz_date: quizDate, question_ids: ids })
+      .select()
+
+    if (insertError) {
+      console.error('daily_quizzes insert error:', insertError)
+    } else {
+      console.log('daily quiz created:', insertData)
+    }
+
+    return selected
+  } catch (error) {
+    console.error('Error getting or creating daily quiz:', error)
+    throw error
   }
 }
 
