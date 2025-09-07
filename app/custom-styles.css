@@ -218,6 +218,10 @@ p:hover {
   --ui-radius: 12px;
   --ui-gap: 1rem;
   --card-elev: 0 8px 20px rgba(2,6,23,0.08);
+  /* Warning color tokens (hex + RGB) - used by .warning-* utility classes */
+  --color-warning: #ff4500; /* primary warning color (hex) */
+  --color-warning-rgb: 255,69,0; /* rgb tuple for rgba() uses */
+  --color-warning-foreground: #ffffff; /* text color when on warning background */
 }
 
 /* Make main container feel lighter and centered */
@@ -261,6 +265,40 @@ main {
   background: linear-gradient(180deg, rgba(8,10,12,0.96), rgba(12,14,16,0.96));
   border: 1px solid rgba(255,255,255,0.04);
   box-shadow: 0 18px 40px rgba(2,6,23,0.08), inset 0 4px 12px rgba(255,255,255,0.02);
+}
+
+/* Dark-mode overrides for warning tokens */
+.dark {
+  --color-warning: #ff6b6b;
+  --color-warning-rgb: 255,107,107;
+  --color-warning-foreground: #0b1220;
+}
+
+/* Warning utilities */
+.warning-text {
+  color: var(--color-warning) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.02em !important;
+}
+
+.warning-bg {
+  background-color: rgba(var(--color-warning-rgb), 0.08) !important;
+  color: var(--color-warning-foreground) !important;
+  padding: 0.25rem 0.5rem !important;
+  border-radius: 0.375rem !important;
+  display: inline-block !important;
+}
+
+.warning-border {
+  border: 1px solid rgba(var(--color-warning-rgb), 0.16) !important;
+  color: var(--color-warning) !important;
+}
+
+/* Paragraph-level warning variant */
+p.warning {
+  color: var(--color-warning) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.02em !important;
 }
 
 

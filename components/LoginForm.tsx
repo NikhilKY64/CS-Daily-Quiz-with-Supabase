@@ -67,7 +67,7 @@ export default function LoginForm({ onLogin }: { onLogin?: (user: any) => void }
     setStatus("Signing up...")
     
     try {
-      await signUpUser(email, password)
+      await signUpUser(email, password, name)
       setStatus("To confirm your email, check your inbox.")
       // If confirmation is disabled, session may be active immediately
       await afterAuthSuccess(true) // Pass true to indicate this is a new user
