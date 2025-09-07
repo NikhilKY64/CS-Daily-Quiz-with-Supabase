@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Calendar, TrendingUp, Target, Clock, Award, ChevronLeft, ChevronRight } from "lucide-react"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts"
+import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts"
 import { supabase } from "@/lib/supabaseClient"
 
 interface ProgressTrackingProps {
@@ -20,6 +20,10 @@ export function ProgressTracking({ onBack }: ProgressTrackingProps) {
   const [timeRange, setTimeRange] = useState("30"); // days
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 5;
+  const [isDark, setIsDark] = useState(false);
+  // Resolved chart colors (runtime-resolved from CSS variables)
+  const [scoreColor, setScoreColor] = useState<string>('hsl(var(--primary))');
+  const [timeColor, setTimeColor] = useState<string>('#3b82f6');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -35,7 +39,7 @@ export function ProgressTracking({ onBack }: ProgressTrackingProps) {
           .eq("user_id", user.id)
           .order("created_at", { ascending: true });
         if (error) throw error;
-        setQuizHistory((data || []).map(q => ({
+        setQuizHistory((data || []).map((q: { created_at: string; score: number; total_questions: number; time_spent?: number }) => ({
           date: q.created_at,
           score: q.score,
           totalQuestions: q.total_questions,
@@ -70,6 +74,29 @@ export function ProgressTracking({ onBack }: ProgressTrackingProps) {
       }
     };
     fetchData();
+    // detect dark mode for chart contrast
+    try {
+      const dark = document.documentElement.classList.contains("dark");
+      setIsDark(dark);
+
+      // Resolve CSS variables to usable color strings.
+      const styles = getComputedStyle(document.documentElement);
+      const primaryRaw = styles.getPropertyValue('--primary').trim();
+      const chart2Raw = styles.getPropertyValue('--chart-2').trim() || styles.getPropertyValue('--chart-1').trim();
+
+      const resolveColor = (raw: string, fallback: string) => {
+        if (!raw) return fallback;
+        // If raw already includes a function or valid color token, use it directly
+        if (raw.startsWith('#') || raw.startsWith('rgb') || raw.startsWith('hsl') || raw.includes('(')) return raw;
+        // Otherwise assume it's HSL components like "221.2 83.2% 53.3%" and wrap with hsl(...)
+        return `hsl(${raw})`;
+      };
+
+      setScoreColor(resolveColor(primaryRaw, 'hsl(var(--primary))'));
+      setTimeColor(resolveColor(chart2Raw, '#3b82f6'));
+    } catch (e) {
+      // ignore and keep defaults
+    }
   }, []);
 
   if (loading) {
@@ -98,11 +125,19 @@ export function ProgressTracking({ onBack }: ProgressTrackingProps) {
   const filteredHistory = quizHistory.filter((quiz) => new Date(quiz.date) >= cutoffDate);
 
   // Prepare chart data
+  // Helper to format ms to mm:ss
+  const formatTime = (ms: number) => {
+    const seconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+  };
+
   const chartData = filteredHistory.map((quiz) => ({
     date: new Date(quiz.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
     score: quiz.score,
     percentage: Math.round((quiz.score / quiz.totalQuestions) * 100),
-    timeSpent: Math.round(quiz.timeSpent / 1000 / 60), // minutes
+    timeSpent: quiz.timeSpent, // keep ms, format in tooltip/label
   }))
 
   // Calculate statistics
@@ -270,18 +305,36 @@ export function ProgressTracking({ onBack }: ProgressTrackingProps) {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={200}>
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis domain={[0, 5]} />
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="scoreAreaColor" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={scoreColor} stopOpacity={0.32}/>
+                      <stop offset="95%" stopColor={scoreColor} stopOpacity={0.06}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke={isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'} />
+                  <XAxis dataKey="date" stroke={isDark ? '#cbd5e1' : '#475569'} tick={{ fill: isDark ? '#cbd5e1' : '#475569' }} />
+                  <YAxis domain={[0, 5]} stroke={isDark ? '#cbd5e1' : '#475569'} tick={{ fill: isDark ? '#cbd5e1' : '#475569' }} />
+                  {/* No label to avoid overlap */}
                   <Tooltip
+                    contentStyle={{ backgroundColor: isDark ? '#0b1220' : '#fff', borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }}
                     formatter={(value, name) => [
                       name === "score" ? `${value}/5` : `${value}%`,
                       name === "score" ? "Score" : "Percentage",
                     ]}
                   />
-                  <Line type="monotone" dataKey="score" stroke="hsl(var(--primary))" strokeWidth={2} />
-                </LineChart>
+                  <Area
+                    type="monotone"
+                    dataKey="score"
+                    stroke={scoreColor}
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#scoreAreaColor)"
+                    dot={{ r: 4, stroke: scoreColor, strokeWidth: 2, fill: isDark ? 'var(--card)' : '#fff' }}
+                    activeDot={{ r: 6, fill: scoreColor }}
+                    connectNulls={true}
+                  />
+                </AreaChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
@@ -290,17 +343,43 @@ export function ProgressTracking({ onBack }: ProgressTrackingProps) {
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Time Spent</CardTitle>
-              <CardDescription>Minutes spent per quiz</CardDescription>
+              <CardDescription>Time spent per quiz</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip formatter={(value) => [`${value} min`, "Time Spent"]} />
-                  <Bar dataKey="timeSpent" fill="hsl(var(--chart-1))" />
-                </BarChart>
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="timeAreaColor" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={timeColor} stopOpacity={0.32}/>
+                      <stop offset="95%" stopColor={timeColor} stopOpacity={0.06}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke={isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'} />
+                  <XAxis dataKey="date" stroke={isDark ? '#cbd5e1' : '#475569'} tick={{ fill: isDark ? '#cbd5e1' : '#475569' }} />
+                  <YAxis
+                    domain={[0, 480]}
+                    ticks={[120, 240, 360, 480]}
+                    tickFormatter={(v) => `${v / 60} min`}
+                    stroke={isDark ? '#cbd5e1' : '#475569'}
+                    tick={{ fill: isDark ? '#cbd5e1' : '#475569' }}
+                  />
+                  <Tooltip contentStyle={{ backgroundColor: isDark ? '#0b1220' : '#fff', borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }} formatter={(value) => {
+                    const min = Math.floor(Number(value) / 60);
+                    const sec = Number(value) % 60;
+                    return [`${min}m ${sec}s`, "Time Spent"];
+                  }} />
+                  <Area
+                    type="monotone"
+                    dataKey="timeSpent"
+                    stroke={timeColor}
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#timeAreaColor)"
+                    dot={{ r: 4, stroke: timeColor, strokeWidth: 2, fill: isDark ? 'var(--card)' : '#fff' }}
+                    activeDot={{ r: 6, fill: timeColor }}
+                    connectNulls={true}
+                  />
+                </AreaChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
@@ -347,8 +426,7 @@ export function ProgressTracking({ onBack }: ProgressTrackingProps) {
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {Math.round((quiz.score / quiz.totalQuestions) * 100)}% • {Math.round(quiz.timeSpent / 1000 / 60)}
-                      m {Math.round((quiz.timeSpent / 1000) % 60)}s
+                      {Math.round((quiz.score / quiz.totalQuestions) * 100)}% • {formatTime(quiz.timeSpent)}
                     </p>
                   </div>
                   <div className={`text-lg font-bold ${getScoreColor(quiz.score, quiz.totalQuestions)}`}>

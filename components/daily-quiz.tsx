@@ -1,4 +1,5 @@
-"use client"
+
+"use client";
 
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -21,6 +22,7 @@ type QuizState = "loading" | "quiz" | "results"
 
 export function DailyQuiz({ onComplete, onExit }: DailyQuizProps) {
   const [state, setState] = useState<QuizState>("loading")
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [questions, setQuestions] = useState<Question[]>([])
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [answers, setAnswers] = useState<number[]>([])
@@ -165,71 +167,75 @@ export function DailyQuiz({ onComplete, onExit }: DailyQuizProps) {
   const handleSubmit = () => {
     // Record final question time if not already recorded
     if (questionTimes[currentQuestionIndex] === 0) {
-      const timeSpent = Date.now() - questionStartTime
-      const newQuestionTimes = [...questionTimes]
-      newQuestionTimes[currentQuestionIndex] = timeSpent
-      setQuestionTimes(newQuestionTimes)
+      const timeSpent = Date.now() - questionStartTime;
+      const newQuestionTimes = [...questionTimes];
+      newQuestionTimes[currentQuestionIndex] = timeSpent;
+      setQuestionTimes(newQuestionTimes);
     }
 
     // Calculate results
-    const totalTime = Date.now() - startTime
-    let correctCount = 0
+    const totalTimeMs = Date.now() - startTime;
+    const totalTimeSec = Math.floor(totalTimeMs / 1000); // store in seconds
+    let correctCount = 0;
 
     const questionResults: QuizQuestionResult[] = questions.map((question, index) => {
-      const isCorrect = answers[index] === question.correctAnswer
-      if (isCorrect) correctCount++
-
+      const isCorrect = answers[index] === question.correctAnswer;
+      if (isCorrect) correctCount++;
       return {
         questionId: question.id,
         question: question.question,
         selectedAnswer: answers[index],
         correctAnswer: question.correctAnswer,
         isCorrect,
-        timeSpent: questionTimes[index],
-      }
-    })
+        timeSpent: Math.floor(questionTimes[index] / 1000), // seconds per question
+      };
+    });
 
     // Ensure last question gets evaluated
     setEvaluation((prev) => {
-      const updated = [...prev]
+      const updated = [...prev];
       if (updated[currentQuestionIndex] === "pending" && answers[currentQuestionIndex] !== -1) {
         updated[currentQuestionIndex] =
-          answers[currentQuestionIndex] === currentQuestion.correctAnswer ? "correct" : "wrong"
+          answers[currentQuestionIndex] === currentQuestion.correctAnswer ? "correct" : "wrong";
       }
-      return updated
-    })
+      return updated;
+    });
 
     const result: QuizResult = {
       date: new Date().toISOString(),
       score: correctCount,
       totalQuestions: questions.length,
-      timeSpent: totalTime,
+      timeSpent: totalTimeSec, // store in seconds
       questions: questionResults,
-    }
+    };
 
-    setQuizResult(result)
-    setShowResults(true)
-  }
+    setQuizResult(result);
+    setShowResults(true);
+  };
 
   const handleFinish = async () => {
-    if (quizResult) {
+    if (quizResult && !isSubmitting) {
+      setIsSubmitting(true);
       try {
-        await completeQuiz(quizResult)
-        onComplete(quizResult)
+        await completeQuiz(quizResult);
+        onComplete(quizResult);
       } catch (error) {
-        console.error('Error completing quiz:', error)
+        console.error('Error completing quiz:', error);
         // Still call onComplete to allow user to continue
-        onComplete(quizResult)
+        onComplete(quizResult);
+      } finally {
+        setIsSubmitting(false);
       }
     }
-  }
+  };
 
-  const formatTime = (ms: number) => {
-    const seconds = Math.floor(ms / 1000)
-    const minutes = Math.floor(seconds / 60)
-    const remainingSeconds = seconds % 60
-    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`
-  }
+  // Format seconds to HH:MM:SS
+  const formatTime = (seconds: number) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return [h, m, s].map(unit => String(unit).padStart(2, '0')).join(':');
+  };
 
   const getScoreColor = (score: number, total: number) => {
     const percentage = (score / total) * 100
@@ -335,8 +341,8 @@ export function DailyQuiz({ onComplete, onExit }: DailyQuizProps) {
             </div>
           </div>
 
-          <Button onClick={handleFinish} className="w-full" size="lg">
-            Finish Quiz
+          <Button onClick={handleFinish} className="w-full" size="lg" disabled={isSubmitting}>
+            {isSubmitting ? 'Submitting...' : 'Finish Quiz'}
           </Button>
         </CardContent>
       </Card>

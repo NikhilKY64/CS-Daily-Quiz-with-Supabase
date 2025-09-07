@@ -46,29 +46,31 @@ export default function HomePage() {
     }
     init()
     
-    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      const currentUser = session?.user ?? null
-      setUser(currentUser)
-      
-      if (currentUser) {
-        // Get user profile on auth state change
-        try {
-          const profile = await getProfile(currentUser.id)
-          if (profile) {
-            setUserName(profile.name)
-            
-            // Check if user is new
-            if (profile.created_at) {
-              const createdDate = new Date(profile.created_at).toDateString()
-              const today = new Date().toDateString()
-              setIsNewUser(createdDate === today)
+    const { data: sub } = supabase.auth.onAuthStateChange(
+      async (_event: string, session: import('@supabase/supabase-js').Session | null) => {
+        const currentUser = session?.user ?? null
+        setUser(currentUser)
+        
+        if (currentUser) {
+          // Get user profile on auth state change
+          try {
+            const profile = await getProfile(currentUser.id)
+            if (profile) {
+              setUserName(profile.name)
+              
+              // Check if user is new
+              if (profile.created_at) {
+                const createdDate = new Date(profile.created_at).toDateString()
+                const today = new Date().toDateString()
+                setIsNewUser(createdDate === today)
+              }
             }
+          } catch (error) {
+            console.error('Error getting user profile:', error)
           }
-        } catch (error) {
-          console.error('Error getting user profile:', error)
         }
       }
-    })
+    )
     
     return () => {
       sub.subscription.unsubscribe()
@@ -97,7 +99,7 @@ export default function HomePage() {
     // subscribe to changes in quiz_meta
     const channel = supabase
       .channel('public:quiz_meta')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'quiz_meta' }, (payload) => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'quiz_meta' }, (payload: any) => {
         try {
           const newTitle = (payload?.new as { quiz_title?: string })?.quiz_title
           if (newTitle) setQuizTitle(newTitle)

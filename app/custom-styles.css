@@ -37,8 +37,8 @@ p.highlight {
 /* Dark mode specific enhancements */
 .dark div {
   /* Neutral grey dark surfaces (less blue) */
-  background-color: #0b0b0b !important; /* near-black neutral */
-  border-color: #242424 !important; /* soft grey border */
+      background-color: #282828 !important;
+    border-color: #888890 !important;
 }
 
 .dark p {
@@ -375,7 +375,7 @@ div.card-like {
 
 /* Dark-mode main gradient to be softer */
 .dark main {
-  background: linear-gradient(180deg, rgba(2,6,23,0.56), rgba(2,6,23,0.46));
+   background: linear-gradient(180deg, rgb(82 82 84 / 64%), rgb(40 40 42 / 46%));
 }
 
 /* App container gutters and breathing room */
