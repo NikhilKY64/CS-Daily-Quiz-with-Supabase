@@ -6,7 +6,7 @@ import { StudentDashboard } from "@/components/student-dashboard"
 import { TeacherDashboard } from "@/components/teacher-dashboard"
 import type { StudentProgress } from "@/lib/student-storage"
 import LoginForm from "@/components/LoginForm"
-import { supabase } from "@/lib/supabaseClient"
+import { supabase, getAskedQuestionIdsForUser } from "@/lib/supabaseClient"
 import { getProfile } from "@/lib/supabaseClient"
 import { getQuizTitle } from "@/lib/import-export"
 
@@ -19,6 +19,34 @@ export default function HomePage() {
   const [user, setUser] = useState<any>(null)
   const [userName, setUserName] = useState<string>("") 
   const [isNewUser, setIsNewUser] = useState<boolean>(false)
+  const [totalQuestions, setTotalQuestions] = useState<number | null>(null)
+  const [askedQuestions, setAskedQuestions] = useState<number | null>(null)
+
+  // Load total and asked questions for the current user
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        // Get total questions
+        const { count: total } = await supabase
+          .from('quiz_questions')
+          .select('*', { count: 'exact', head: true })
+        setTotalQuestions(typeof total === 'number' ? total : null)
+
+        // Get asked questions for this user
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          const askedIds = await getAskedQuestionIdsForUser(user.id)
+          setAskedQuestions(Array.isArray(askedIds) ? askedIds.length : null)
+        } else {
+          setAskedQuestions(null)
+        }
+      } catch (e) {
+        setTotalQuestions(null)
+        setAskedQuestions(null)
+      }
+    }
+    fetchCounts()
+  }, [])
 
 
   useEffect(() => {
@@ -158,6 +186,15 @@ export default function HomePage() {
             <div className="text-center space-y-2">
               <h2 className="text-3xl font-bold text-foreground">{greeting}</h2>
               <p className="text-muted-foreground">Ready for today&apos;s challenge?</p>
+              <div className="mt-2 text-sm text-muted-foreground">
+                {typeof totalQuestions === 'number' && typeof askedQuestions === 'number' ? (
+                  <>
+                    Total Questions: <b>{totalQuestions}</b> &nbsp;|&nbsp; Already Asked: <b>{askedQuestions}</b>
+                  </>
+                ) : (
+                  <span>Loading question stats...</span>
+                )}
+              </div>
             </div>
             <StudentDashboard quizTitle={quizTitle} />
           </div>

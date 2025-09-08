@@ -189,13 +189,21 @@ export function importQuestions(file: File, replaceExisting = false): Promise<Im
 
         if (replaceExisting) {
           try {
-            // Remove all existing questions before importing
-            await import('./truncate-questions').then(mod => mod.truncateQuizQuestions())
-          } catch (err) {
-            resolve({
-              success: false,
-              message: 'Failed to remove existing questions before import: ' + (err instanceof Error ? err.message : 'Unknown error'),
+            // Use server-side API (service role) to replace questions and clear asked_questions.
+            const resp = await fetch('/api/replace-questions', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ questions: validQuestions }),
             })
+            const body = await resp.json().catch(() => ({}))
+            if (!resp.ok) {
+              resolve({ success: false, message: 'Server replace failed: ' + (body?.error || resp.statusText) })
+              return
+            }
+            resolve({ success: true, message: `Successfully replaced ${body.inserted || validQuestions.length} questions.`, importedCount: body.inserted || validQuestions.length })
+            return
+          } catch (err) {
+            resolve({ success: false, message: 'Failed to replace questions on server: ' + (err instanceof Error ? err.message : String(err)) })
             return
           }
         }
