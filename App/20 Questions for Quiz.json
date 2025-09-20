@@ -1,0 +1,142 @@
+[
+  {
+    "question": "Which of the following is a valid variable name in Python?",
+    "options": ["1name", "_name", "for", "def"],
+    "correctAnswer": 1,
+    "category": "CS",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What does CPU stand for?",
+    "options": ["Central Process Unit", "Central Processing Unit", "Computer Processing Unit", "Computer Personal Unit"],
+    "correctAnswer": 1,
+    "category": "CS",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which of these is not a programming language?",
+    "options": ["Python", "C++", "HTML", "Java"],
+    "correctAnswer": 2,
+    "category": "CS",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What does RAM stand for?",
+    "options": ["Read Access Memory", "Random Access Memory", "Run All Memory", "Ready Available Memory"],
+    "correctAnswer": 1,
+    "category": "CS",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which operator is used for exponentiation in Python?",
+    "options": ["^", "**", "exp()", "%"],
+    "correctAnswer": 1,
+    "category": "CS",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which of the following is NOT an input device?",
+    "options": ["Keyboard", "Monitor", "Mouse", "Scanner"],
+    "correctAnswer": 1,
+    "category": "CS",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which function is used to display output in Python?",
+    "options": ["input()", "print()", "output()", "display()"],
+    "correctAnswer": 1,
+    "category": "CS",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which of the following is a mutable data type in Python?",
+    "options": ["Tuple", "String", "List", "Integer"],
+    "correctAnswer": 2,
+    "category": "CS",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is the extension of a Python file?",
+    "options": [".py", ".java", ".cpp", ".txt"],
+    "correctAnswer": 0,
+    "category": "CS",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which of the following is used to comment a single line in Python?",
+    "options": ["//", "#", "/* */", "<!-- -->"],
+    "correctAnswer": 1,
+    "category": "CS",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which keyword is used to define a function in Python?",
+    "options": ["func", "def", "function", "define"],
+    "correctAnswer": 1,
+    "category": "CS",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which of the following is used to import a module in Python?",
+    "options": ["include", "import", "require", "using"],
+    "correctAnswer": 1,
+    "category": "CS",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which symbol is used to assign a value to a variable in Python?",
+    "options": ["=", "==", ":=", "->"],
+    "correctAnswer": 0,
+    "category": "CS",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which of the following is a loop structure in Python?",
+    "options": ["for", "repeat", "do", "switch"],
+    "correctAnswer": 0,
+    "category": "CS",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which function is used to get user input in Python?",
+    "options": ["scan()", "input()", "read()", "get()"],
+    "correctAnswer": 1,
+    "category": "CS",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which of the following is NOT a Python data type?",
+    "options": ["List", "Dictionary", "Array", "Tuple"],
+    "correctAnswer": 2,
+    "category": "CS",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which operator is used for division in Python?",
+    "options": ["//", "/", "div", "\\"],
+    "correctAnswer": 1,
+    "category": "CS",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which of the following is used to start a block of code in Python?",
+    "options": ["Curly braces {}", "Parentheses ()", "Colon :", "Semicolon ;"],
+    "correctAnswer": 2,
+    "category": "CS",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which of the following is used to check equality in Python?",
+    "options": ["=", "==", "===", "!="],
+    "correctAnswer": 1,
+    "category": "CS",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which of the following is used to store key-value pairs in Python?",
+    "options": ["List", "Tuple", "Dictionary", "Set"],
+    "correctAnswer": 2,
+    "category": "CS",
+    "difficulty": "easy"
+  }
+]
