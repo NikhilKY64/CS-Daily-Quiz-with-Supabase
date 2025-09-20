@@ -12,7 +12,7 @@ This app is **under development**. You may encounter bugs or incomplete features
 
 ## 🚀 Getting Started
 
-**Method 2: Deploy on Vercel**
+**Deployed as web app**
 
 - Use this link (https://cs-daily-quiz-with-supabase.vercel.app/) to open app.
 
